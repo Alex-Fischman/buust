@@ -69,10 +69,24 @@ document.addEventListener("mousemove", e => {
 	_euler.reorder("XYZ");
 });
 
+const signedDistance = point => {
+	let distance = Infinity;
+	for (let i = 0; i < cubes.count; ++i) {
+		cubes.getMatrixAt(i, _matrix);
+		_vector.copy(point).applyMatrix4(_matrix.invert());
+		_vector.fromArray(_vector.toArray().map(x => Math.abs(x) - 1));
+		const a = Math.min(0, Math.max(_vector.x, _vector.y, _vector.z));
+		const b = _vector.max(new THREE.Vector3()).length();
+		distance = Math.min(distance, a + b);
+	}
+	return distance;
+};
 const update = dt => {
 	_vector.set(!!keys.d - !!keys.a, !!keys.q - !!keys.e, !!keys.s - !!keys.w).setLength(dt * 10);
 	_vector.applyMatrix4(_matrix.extractRotation(camera.matrix));
 	camera.position.add(_vector);
+
+	console.log(signedDistance(camera.position));
 };
 
 let then = performance.now();
