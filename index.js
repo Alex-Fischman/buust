@@ -19,13 +19,13 @@ const _quaternion = new THREE.Quaternion();
 const cubes = new THREE.InstancedMesh(
 	new THREE.BoxGeometry(2, 2, 2),
 	new THREE.MeshToonMaterial(),
-	1e3,
+	1e4,
 );
 const scale = new THREE.Vector3(1, 1, 1);
 for (let i = 0; i < cubes.count; ++i) {
-	_vector.x = (Math.random() * 2 - 1) * Math.sqrt(cubes.count) * 2;
-	_vector.y = (Math.random() * 2 - 1) * Math.sqrt(cubes.count) * 2;
-	_vector.z = (Math.random() * 2 - 1) * Math.sqrt(cubes.count) * 2;
+	_vector.x = (Math.random() * 2 - 1) * Math.sqrt(cubes.count);
+	_vector.y = (Math.random() * 2 - 1) * Math.sqrt(cubes.count);
+	_vector.z = (Math.random() * 2 - 1) * Math.sqrt(cubes.count);
 	_euler.x = Math.random() * Math.PI * 2;
 	_euler.y = Math.random() * Math.PI * 2;
 	_euler.z = Math.random() * Math.PI * 2;
