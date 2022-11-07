@@ -33,7 +33,7 @@ for (let i = 0; i < cubes.count; ++i) {
 	_matrix.compose(_vector, _quaternion, scale);
 	cubes.setMatrixAt(i, _matrix);
 }
-_vector.set(0, -2, 0);
+_vector.set(0, -2.5, 0);
 _euler.set(0, 0, 0);
 _quaternion.setFromEuler(_euler);
 _matrix.compose(_vector, _quaternion, scale);
@@ -82,11 +82,14 @@ const signedDistance = point => {
 	return distance;
 };
 const update = dt => {
+	const head = signedDistance(new THREE.Vector3(0, 0, 0).add(camera.position)) - 0.5;
+	const foot = signedDistance(new THREE.Vector3(0, -1, 0).add(camera.position)) - 0.5;
+	const body = signedDistance(new THREE.Vector3(0, -0.5, 0).add(camera.position)) - 0.5;
+
 	_vector.set(!!keys.d - !!keys.a, !!keys.q - !!keys.e, !!keys.s - !!keys.w).setLength(dt * 10);
 	_vector.applyMatrix4(_matrix.extractRotation(camera.matrix));
+	// todo: handle collision
 	camera.position.add(_vector);
-
-	console.log(signedDistance(camera.position));
 };
 
 let then = performance.now();
