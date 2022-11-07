@@ -40,8 +40,6 @@ _matrix.compose(_vector, _quaternion, scale);
 cubes.setMatrixAt(0, _matrix);
 scene.add(cubes);
 
-const collisionPoints = new THREE.CapsuleGeometry(0.5).attributes.position;
-
 const blocker = document.getElementById("blocker");
 blocker.addEventListener("click", blocker.requestPointerLock);
 document.addEventListener("pointerlockchange", e => {
@@ -68,20 +66,14 @@ document.addEventListener("mousemove", e => {
 });
 
 let update = dt => {
-	_matrix.extractRotation(camera.matrix)
+	_matrix.extractRotation(camera.matrix);
 
 	_vector.set(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w).setLength(dt * 10);
-	camera.position.add(_vector.applyMatrix4(_matrix));
+	camera.position.add(_vector.applyMatrix4(_matrix).setY(0));
 
-	const raycaster = new THREE.Raycaster(camera.position, _vector, 0, 0);
-	for (let i = 0; i < collisionPoints.count; ++i) {
-		_vector.fromBufferAttribute(collisionPoints, i);
-		_vector.applyMatrix4(_matrix);
-		raycaster.ray.direction.set(_vector.normalize());
-		raycaster.far = _vector.length();
-		const results = raycaster.intersectObject(cubes);
-		if (results.length) console.log(results);
-	}
+	const raycaster = new THREE.Raycaster(camera.position, _vector.set(0, -1, 0), 0, 1);
+	const results = raycaster.intersectObject(cubes);
+	if (results.length) console.log(results);
 };
 
 let then = performance.now();
