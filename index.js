@@ -83,12 +83,13 @@ const signedDistance = point => {
 };
 const update = dt => {
 	const head = signedDistance(new THREE.Vector3(0, 0, 0).add(camera.position)) - 0.5;
-	const foot = signedDistance(new THREE.Vector3(0, -1, 0).add(camera.position)) - 0.5;
 	const body = signedDistance(new THREE.Vector3(0, -0.5, 0).add(camera.position)) - 0.5;
+	const foot = signedDistance(new THREE.Vector3(0, -1, 0).add(camera.position)) - 0.5;
+	const travel = Math.min(head, body, foot);
 
 	_vector.set(!!keys.d - !!keys.a, !!keys.q - !!keys.e, !!keys.s - !!keys.w).setLength(dt * 10);
 	_vector.applyMatrix4(_matrix.extractRotation(camera.matrix));
-	// todo: handle collision
+	// todo: collision resolution
 	camera.position.add(_vector);
 };
 
