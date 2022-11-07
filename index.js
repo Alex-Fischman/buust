@@ -1,5 +1,5 @@
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1e-3, 1e3);
+const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1e-5, 1e5);
 const renderer = new THREE.WebGLRenderer();
 document.body.appendChild(renderer.domElement);
 
@@ -19,14 +19,13 @@ const _quaternion = new THREE.Quaternion();
 const cubes = new THREE.InstancedMesh(
 	new THREE.BoxGeometry(2, 2, 2),
 	new THREE.MeshToonMaterial(),
-	1e4,
+	1e3,
 );
-cubes.material.side = THREE.DoubleSide;
 const scale = new THREE.Vector3(1, 1, 1);
 for (let i = 0; i < cubes.count; ++i) {
-	_vector.x = (Math.random() * 2 - 1) * Math.sqrt(cubes.count);
-	_vector.y = (Math.random() * 2 - 1) * Math.sqrt(cubes.count);
-	_vector.z = (Math.random() * 2 - 1) * Math.sqrt(cubes.count);
+	_vector.x = (Math.random() * 2 - 1) * Math.sqrt(cubes.count) * 2;
+	_vector.y = (Math.random() * 2 - 1) * Math.sqrt(cubes.count) * 2;
+	_vector.z = (Math.random() * 2 - 1) * Math.sqrt(cubes.count) * 2;
 	_euler.x = Math.random() * Math.PI * 2;
 	_euler.y = Math.random() * Math.PI * 2;
 	_euler.z = Math.random() * Math.PI * 2;
@@ -39,6 +38,7 @@ _euler.set(0, 0, 0);
 _quaternion.setFromEuler(_euler);
 _matrix.compose(_vector, _quaternion, scale);
 cubes.setMatrixAt(0, _matrix);
+cubes.geometry.normalizeNormals();
 scene.add(cubes);
 
 const light = new THREE.PointLight();
@@ -69,27 +69,10 @@ document.addEventListener("mousemove", e => {
 	_euler.reorder("XYZ");
 });
 
-const player = new THREE.Mesh(
-	new THREE.CapsuleGeometry(0.5, 1, 2, 8),
-	new THREE.MeshToonMaterial(),
-);
-scene.add(player);
-
 const update = dt => {
-	const result = new THREE.Raycaster(
-		new THREE.Vector3(0, 1, 0).add(player.position),
-		new THREE.Vector3(0, -1, 0),
-		0,
-		2,
-	).intersectObject(cubes).reduce((a, b) => !a? b: (a.distance < b.distance) ? a: b, undefined);
-	player.material.color.set(result? 0xFF0000: 0xFFFFFF);
-
-	let distance = player.position.length() + (!!keys.w - !!keys.s) * dt * 10;
-	player.position.setFromMatrixColumn(camera.matrix, 2).setLength(-distance);
-	
-	// _vector.set(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w).setLength(dt * 10);
-	// _vector.applyMatrix4(_matrix.extractRotation(camera.matrix));
-	// player.position.add(_vector);
+	_vector.set(!!keys.d - !!keys.a, !!keys.q - !!keys.e, !!keys.s - !!keys.w).setLength(dt * 10);
+	_vector.applyMatrix4(_matrix.extractRotation(camera.matrix));
+	camera.position.add(_vector);
 };
 
 let then = performance.now();
