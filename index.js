@@ -11,32 +11,16 @@ window.addEventListener("resize", () => {
 });
 window.dispatchEvent(new Event("resize"));
 
+const CUBES_PER_SIDE = 10;
+const CUBES_DISTANCE = 10;
+scene.fog = new THREE.Fog(0x000000, 1, CUBES_PER_SIDE / 2 * CUBES_DISTANCE);
+
 const cubes = new THREE.InstancedMesh(
 	new THREE.BoxGeometry(2, 2, 2),
-	new THREE.MeshToonMaterial(),
-	2e4,
+	new THREE.MeshBasicMaterial(),
+	CUBES_PER_SIDE * CUBES_PER_SIDE * CUBES_PER_SIDE,
 );
-{
-	const position = new THREE.Vector3();
-	const rotation = new THREE.Euler();
-	const quaternion = new THREE.Quaternion();
-	const matrix = new THREE.Matrix4();
-	const scale = new THREE.Vector3(1, 1, 1);
-	for (let i = 0; i < cubes.count; ++i) {
-		position.x = (Math.random() * 2 - 1) * Math.sqrt(cubes.count);
-		position.y = (Math.random() * 2 - 1) * Math.sqrt(cubes.count);
-		position.z = (Math.random() * 2 - 1) * Math.sqrt(cubes.count);
-		rotation.x = Math.random() * Math.PI * 2;
-		rotation.y = Math.random() * Math.PI * 2;
-		rotation.z = Math.random() * Math.PI * 2;
-		cubes.setMatrixAt(i, matrix.compose(position, quaternion.setFromEuler(rotation), scale));
-	}
-}
-cubes.geometry.normalizeNormals();
 scene.add(cubes);
-
-const light = new THREE.PointLight();
-scene.add(light);
 
 const blocker = document.getElementById("blocker");
 blocker.addEventListener("click", blocker.requestPointerLock);
@@ -62,43 +46,69 @@ document.addEventListener("mousemove", e => {
 });
 
 const update = dt => {
+	{
+		const position = new THREE.Vector3();
+		const rotation = new THREE.Euler();
+		const quaternion = new THREE.Quaternion();
+		const matrix = new THREE.Matrix4();
+		const scale = new THREE.Vector3(1, 1, 1);
+		const hash = x => Math.sin(x * 2357 + 0.7532) / 2 + 0.5;
+		for (let i = 0; i < CUBES_PER_SIDE; ++i) {
+			for (let j = 0; j < CUBES_PER_SIDE; ++j) {
+				for (let k = 0; k < CUBES_PER_SIDE; ++k) {
+					position.copy(camera.position).divideScalar(CUBES_DISTANCE);
+					position.subScalar(CUBES_PER_SIDE / 2).floor();
+					position.x += i;
+					position.y += j;
+					position.z += k;
+					const seed = hash(position.x + hash(position.y + hash(position.z)));
+					position.x += hash(seed + 0) * 0.8;
+					position.y += hash(seed + 1) * 0.8;
+					position.z += hash(seed + 2) * 0.8;
+					position.multiplyScalar(CUBES_DISTANCE);
+					
+					rotation.x = hash(seed + 3) * Math.PI * 2;
+					rotation.y = hash(seed + 4) * Math.PI * 2;
+					rotation.z = hash(seed + 5) * Math.PI * 2;
+					
+					matrix.compose(position, quaternion.setFromEuler(rotation), scale);
+					const index = i * CUBES_PER_SIDE * CUBES_PER_SIDE + j * CUBES_PER_SIDE + k;
+					cubes.setMatrixAt(index, matrix);
+				}
+			}
+		}
+		cubes.instanceMatrix.needsUpdate = true;
+	}
+
 	const movement = dt * 10;
 	const direction = new THREE
 		.Vector3(!!keys.d - !!keys.a, !!keys.q - !!keys.e, !!keys.s - !!keys.w)
 		.applyMatrix4(new THREE.Matrix4().extractRotation(camera.matrix));
 	const position = camera.position;
 
-	const matrix = new THREE.Matrix4();
-	const inverted = [...Array(cubes.count)].map((_, i) => {
-		cubes.getMatrixAt(i, matrix);
-		return matrix.clone().invert();
-	});
-	const vector = new THREE.Vector3();
-	const distances = [
-		new THREE.Vector3(),
-		new THREE.Vector3( 0.001, 0, 0),
-		new THREE.Vector3(-0.001, 0, 0),
-		new THREE.Vector3(0,  0.001, 0),
-		new THREE.Vector3(0, -0.001, 0),
-		new THREE.Vector3(0, 0,  0.001),
-		new THREE.Vector3(0, 0, -0.001),
-	].map(offset => offset.add(position)).map(point => {
+	const distanceToCubes = point => {
+		const matrix = new THREE.Matrix4();
+		const vector = new THREE.Vector3();
 		let distance = Infinity;
 		for (let i = 0; i < cubes.count; ++i) {
-			vector.copy(point).applyMatrix4(inverted[i]);
+			cubes.getMatrixAt(i, matrix);
+			vector.copy(point).applyMatrix4(matrix.invert());
 			vector.fromArray(vector.toArray().map(x => Math.abs(x) - 1));
 			const a = Math.min(0, Math.max(vector.x, vector.y, vector.z));
 			const b = vector.max(new THREE.Vector3()).length();
 			distance = Math.min(distance, a + b);
 		}
 		return distance;
-	});
+	};
 
-	const distance = distances[0] - 0.5;
+	const distance = distanceToCubes(position) - 0.5;
 	const normal = new THREE.Vector3(
-		distances[1] - distances[2],
-		distances[3] - distances[4],
-		distances[5] - distances[6],
+		distanceToCubes(new THREE.Vector3( 0.001, 0, 0).add(position)) -
+		distanceToCubes(new THREE.Vector3(-0.001, 0, 0).add(position)),
+		distanceToCubes(new THREE.Vector3(0,  0.001, 0).add(position)) -
+		distanceToCubes(new THREE.Vector3(0, -0.001, 0).add(position)),
+		distanceToCubes(new THREE.Vector3(0, 0,  0.001).add(position)) -
+		distanceToCubes(new THREE.Vector3(0, 0, -0.001).add(position)),
 	);
 
 	const move  = direction.clone().setLength(Math.min(movement, distance));
