@@ -123,7 +123,7 @@ const update = dt => {
 	if (direction.dot(normal) < 0) direction.projectOnPlane(normal);
 	player.position.add(direction);
 
-	camera.position.lerp(player.position, 0.2);
+	camera.position.lerp(player.position, dt * 10);
 };
 
 let then = performance.now();
