@@ -1,5 +1,4 @@
-const MOVE = 10;
-const GRAVITY = 5;
+const GRAVITY = 10;
 
 const CUBES_PER_SIDE = 10;
 const CUBES_MAX_MOVE = 0.5;
@@ -109,35 +108,35 @@ const update = dt => {
 	}
 
 	const distance = (distanceToCubes(player.position) - 0.5) - EPSILON;
-
-	const input = new THREE
-		.Vector3(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w)
-		.applyMatrix4(new THREE.Matrix4().extractRotation(camera.matrix))
-		.setY(0).setLength(MOVE);
-	const gravity = new THREE.Vector3(0, -GRAVITY, 0);
-	const force = [input, gravity].reduce((a, b) => a.add(b));
-	player.velocity.add(force.multiplyScalar(dt));
-
-	const movement = player.velocity.length() * dt;
-	const direction = player.velocity.clone();
 	
-	player.position.add(direction.setLength(Math.min(movement, distance)));
-	const normal = new THREE.Vector3(
-		distanceToCubes(new THREE.Vector3( EPSILON, 0, 0).add(player.position)) -
-		distanceToCubes(new THREE.Vector3(-EPSILON, 0, 0).add(player.position)),
-		distanceToCubes(new THREE.Vector3(0,  EPSILON, 0).add(player.position)) -
-		distanceToCubes(new THREE.Vector3(0, -EPSILON, 0).add(player.position)),
-		distanceToCubes(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
-		distanceToCubes(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
-	);
-	direction.setLength(Math.max(movement - distance, 0));
-	if (direction.dot(normal) < 0) {
-		direction.projectOnPlane(normal);
-		player.velocity.projectOnPlane(normal);
+	{
+		const dx = player.velocity.length() * dt;
+		const direction = player.velocity.clone();
+		
+		player.position.add(direction.setLength(Math.min(dx, distance)));
+		const normal = new THREE.Vector3(
+			distanceToCubes(new THREE.Vector3( EPSILON, 0, 0).add(player.position)) -
+			distanceToCubes(new THREE.Vector3(-EPSILON, 0, 0).add(player.position)),
+			distanceToCubes(new THREE.Vector3(0,  EPSILON, 0).add(player.position)) -
+			distanceToCubes(new THREE.Vector3(0, -EPSILON, 0).add(player.position)),
+			distanceToCubes(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
+			distanceToCubes(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
+		);
+		direction.setLength(Math.max(dx - distance, 0));
+		if (direction.dot(normal) < 0) {
+			direction.projectOnPlane(normal);
+			player.velocity.projectOnPlane(normal);
+		}
+		player.position.add(direction);
 	}
-	player.position.add(direction);
 
 	camera.position.lerp(player.position, dt * 10);
+
+	// const input = new THREE
+	// 	.Vector3(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w)
+	// 	.applyMatrix4(new THREE.Matrix4().extractRotation(camera.matrix))
+	// 	.setY(0).setLength(MOVE);
+	player.velocity.y -= GRAVITY * dt;
 };
 
 let then = performance.now();
