@@ -1,4 +1,7 @@
-const GRAVITY = 10;
+const MOVE = 10;
+const GRAVITY = 5;
+const DRAG = 0.1;
+const FLY = 5;
 
 const CUBES_PER_SIDE = 10;
 const CUBES_MAX_MOVE = 0.5;
@@ -129,11 +132,21 @@ const update = dt => {
 	player.position.add(direction);
 	camera.position.lerp(player.position, dt * 10);
 
-	// const input = new THREE
-	// 	.Vector3(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w)
-	// 	.applyMatrix4(new THREE.Matrix4().extractRotation(camera.matrix))
-	// 	.setY(0).setLength(MOVE);
-	player.velocity.y -= GRAVITY * dt;
+	const grounded = distance < 0.1;
+	console.log(grounded? "GROUNDED": "FLYING")
+
+	const vertical = player.velocity.y - GRAVITY * dt;
+	const horizontal = new THREE
+		.Vector3(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w)
+		.applyMatrix4(new THREE.Matrix4().extractRotation(camera.matrix))
+		.setY(0);
+	if (grounded) {
+		player.velocity.lerp(horizontal.setLength(MOVE), dt * 10);
+	} else {
+		player.velocity.add(horizontal.setLength(FLY * dt));
+	}
+	player.velocity.y = vertical;
+	player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
 };
 
 let then = undefined;
