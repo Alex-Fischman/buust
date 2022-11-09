@@ -121,7 +121,7 @@ const update = dt => {
 		distanceToCubes(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
 		distanceToCubes(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
 	);
-	direction.setLength(Math.max(dx - distance, 0));
+	direction.setLength(Math.max(movement - distance, 0));
 	if (direction.dot(normal) < 0) {
 		direction.projectOnPlane(normal);
 		player.velocity.projectOnPlane(normal);
