@@ -33,6 +33,7 @@ blocker.addEventListener("click", blocker.requestPointerLock);
 document.addEventListener("pointerlockchange", e => {
 	if (document.pointerLockElement) {
 		blocker.style.visibility = "hidden";
+		then = undefined;
 		requestAnimationFrame(frame);
 	} else {
 		blocker.style.visibility = "visible";
@@ -139,9 +140,9 @@ const update = dt => {
 	player.velocity.y -= GRAVITY * dt;
 };
 
-let then = performance.now();
+let then = undefined;
 const frame = now => {
-	update((now - then) / 1000);
+	update((now - then) / 1000 || 1/60);
 	renderer.render(scene, camera);
 	then = now;
 	if (document.pointerLockElement) requestAnimationFrame(frame);
