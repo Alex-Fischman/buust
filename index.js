@@ -1,3 +1,6 @@
+const MOVE = 10;
+const GRAVITY = 5;
+
 const CUBES_PER_SIDE = 10;
 const CUBES_MAX_MOVE = 0.5;
 const CUBES_DISTANCE = (2 * Math.sqrt(3) + 1) / (1 - CUBES_MAX_MOVE);
@@ -66,13 +69,14 @@ const distanceToCubes = point => {
 
 const player = {
 	position: new THREE.Vector3(),
+	velocity: new THREE.Vector3(),
 };
 
 const update = dt => {
 	{
 		const center = new THREE.Vector3();
 		camera.getWorldDirection(center);
-		center.setLength(DIST_TO_CENTER).add(camera.position);
+		center.setLength(DIST_TO_CENTER).add(player.position);
 		const position = new THREE.Vector3();
 		const rotation = new THREE.Euler();
 		const quaternion = new THREE.Quaternion();
@@ -104,12 +108,19 @@ const update = dt => {
 		cubes.instanceMatrix.needsUpdate = true;
 	}
 
-	const movement = dt * 10;
-	const direction = new THREE
-		.Vector3(!!keys.d - !!keys.a, !!keys.q - !!keys.e, !!keys.s - !!keys.w)
-		.applyMatrix4(new THREE.Matrix4().extractRotation(camera.matrix));
-
 	const distance = (distanceToCubes(player.position) - 0.5) - EPSILON;
+
+	const input = new THREE
+		.Vector3(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w)
+		.applyMatrix4(new THREE.Matrix4().extractRotation(camera.matrix))
+		.setY(0).setLength(MOVE);
+	const gravity = new THREE.Vector3(0, -GRAVITY, 0);
+	const force = [input, gravity].reduce((a, b) => a.add(b));
+	player.velocity.add(force.multiplyScalar(dt));
+
+	const movement = player.velocity.length() * dt;
+	const direction = player.velocity.clone();
+	
 	player.position.add(direction.setLength(Math.min(movement, distance)));
 	const normal = new THREE.Vector3(
 		distanceToCubes(new THREE.Vector3( EPSILON, 0, 0).add(player.position)) -
@@ -120,7 +131,10 @@ const update = dt => {
 		distanceToCubes(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
 	);
 	direction.setLength(Math.max(movement - distance, 0));
-	if (direction.dot(normal) < 0) direction.projectOnPlane(normal);
+	if (direction.dot(normal) < 0) {
+		direction.projectOnPlane(normal);
+		player.velocity.projectOnPlane(normal);
+	}
 	player.position.add(direction);
 
 	camera.position.lerp(player.position, dt * 10);
