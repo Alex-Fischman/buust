@@ -41,9 +41,9 @@ document.addEventListener("pointerlockchange", e => {
 });
 
 const keys = {};
-document.addEventListener("keydown", e => keys[event.key] = true);
-document.addEventListener("keyup", e => keys[event.key] = false);
-document.addEventListener("mousemove", e => {
+document.addEventListener("keydown", event => keys[event.key] = true);
+document.addEventListener("keyup", event => keys[event.key] = false);
+document.addEventListener("mousemove", event => {
 	if (!document.pointerLockElement) return;
 	const euler = new THREE.Euler(0, 0, 0, "YXZ").setFromQuaternion(camera.quaternion);
 	euler.y -= event.movementX * 0.002;
@@ -110,27 +110,23 @@ const update = dt => {
 
 	const distance = (distanceToCubes(player.position) - 0.5) - EPSILON;
 	
-	{
-		const dx = player.velocity.length() * dt;
-		const direction = player.velocity.clone();
-		
-		player.position.add(direction.setLength(Math.min(dx, distance)));
-		const normal = new THREE.Vector3(
-			distanceToCubes(new THREE.Vector3( EPSILON, 0, 0).add(player.position)) -
-			distanceToCubes(new THREE.Vector3(-EPSILON, 0, 0).add(player.position)),
-			distanceToCubes(new THREE.Vector3(0,  EPSILON, 0).add(player.position)) -
-			distanceToCubes(new THREE.Vector3(0, -EPSILON, 0).add(player.position)),
-			distanceToCubes(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
-			distanceToCubes(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
-		);
-		direction.setLength(Math.max(dx - distance, 0));
-		if (direction.dot(normal) < 0) {
-			direction.projectOnPlane(normal);
-			player.velocity.projectOnPlane(normal);
-		}
-		player.position.add(direction);
+	const movement = player.velocity.length() * dt;
+	const direction = player.velocity.clone();
+	player.position.add(direction.setLength(Math.min(movement, distance)));	
+	const normal = new THREE.Vector3(
+		distanceToCubes(new THREE.Vector3( EPSILON, 0, 0).add(player.position)) -
+		distanceToCubes(new THREE.Vector3(-EPSILON, 0, 0).add(player.position)),
+		distanceToCubes(new THREE.Vector3(0,  EPSILON, 0).add(player.position)) -
+		distanceToCubes(new THREE.Vector3(0, -EPSILON, 0).add(player.position)),
+		distanceToCubes(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
+		distanceToCubes(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
+	);
+	direction.setLength(Math.max(dx - distance, 0));
+	if (direction.dot(normal) < 0) {
+		direction.projectOnPlane(normal);
+		player.velocity.projectOnPlane(normal);
 	}
-
+	player.position.add(direction);
 	camera.position.lerp(player.position, dt * 10);
 
 	// const input = new THREE
