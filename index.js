@@ -1,7 +1,8 @@
-const MOVE = 10;
+const MOVE = 2;
 const GRAVITY = 5;
 const DRAG = 0.1;
-const FLY = 2.5;
+const FLY = 2;
+const JUMP = 15;
 
 const CUBES_PER_SIDE = 10;
 const CUBES_MAX_MOVE = 0.5;
@@ -44,8 +45,14 @@ document.addEventListener("pointerlockchange", e => {
 });
 
 const keys = {};
-document.addEventListener("keydown", event => keys[event.key] = true);
-document.addEventListener("keyup", event => keys[event.key] = false);
+let keysThisFrame = {};
+document.addEventListener("keydown", event => {
+	if (!keys[event.key]) keysThisFrame[event.key] = true;
+	keys[event.key] = true;
+});
+document.addEventListener("keyup", event => {
+	keys[event.key] = false;
+});
 document.addEventListener("mousemove", event => {
 	if (!document.pointerLockElement) return;
 	const euler = new THREE.Euler(0, 0, 0, "YXZ").setFromQuaternion(camera.quaternion);
@@ -146,11 +153,15 @@ const update = dt => {
 	forward.setLength(!!keys.w - !!keys.s);
 	if (grounded) player.velocity.lerp(forward.add(right).setLength(MOVE), dt * 20);
 	else          player.velocity.add(forward.add(right).setLength(FLY * dt));
+
+	if (grounded && keysThisFrame[" "])
+		player.velocity.add(normal.clone().setLength(JUMP));
 };
 
 let then = undefined;
 const frame = now => {
 	update((now - then) / 1000 || 1/60);
+	keysThisFrame = {};
 	renderer.render(scene, camera);
 	then = now;
 	if (document.pointerLockElement) requestAnimationFrame(frame);
