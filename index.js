@@ -2,8 +2,8 @@ const MOVE = 2;
 const GRAVITY = 5;
 const DRAG = 0.1;
 const FLY = 2;
-const JUMP = 15;
-const BUUST = 1.1;
+const JUMP = 10;
+const BUUST = 1.2;
 
 const CUBES_PER_SIDE = 10;
 const CUBES_MAX_MOVE = 0.5;
