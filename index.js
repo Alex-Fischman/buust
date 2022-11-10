@@ -132,21 +132,28 @@ const update = dt => {
 	player.position.add(direction);
 	camera.position.lerp(player.position, dt * 10);
 
-	const grounded = distance < 0.1;
-	console.log(grounded? "GROUNDED": "FLYING")
+	player.velocity.y -= GRAVITY * dt;
+	player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
 
-	const vertical = player.velocity.y - GRAVITY * dt;
-	const horizontal = new THREE
-		.Vector3(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w)
-		.applyMatrix4(new THREE.Matrix4().extractRotation(camera.matrix))
-		.setY(0);
-	if (grounded) {
-		player.velocity.lerp(horizontal.setLength(MOVE), dt * 10);
+	if (distance < 0.1) {
+		const forward = new THREE.Vector3();
+		camera.getWorldDirection(forward);
+		const right = new THREE.Vector3().crossVectors(forward, normal);
+		forward.crossVectors(normal, right);
+
+		right.setLength(!!keys.d - !!keys.a);
+		forward.setLength(!!keys.w - !!keys.s);
+
+		const vertical = player.velocity.y;
+		player.velocity.lerp(forward.add(right).setLength(MOVE), dt * 20);
+		player.velocity.y = vertical;
 	} else {
+		const horizontal = new THREE
+			.Vector3(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w)
+			.applyMatrix4(new THREE.Matrix4().extractRotation(camera.matrix))
+			.setY(0).setLength(MOVE);
 		player.velocity.add(horizontal.setLength(FLY * dt));
 	}
-	player.velocity.y = vertical;
-	player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
 };
 
 let then = undefined;
