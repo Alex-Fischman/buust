@@ -1,7 +1,7 @@
 const MOVE = 10;
 const GRAVITY = 5;
 const DRAG = 0.1;
-const FLY = 5;
+const FLY = 2.5;
 
 const CUBES_PER_SIDE = 10;
 const CUBES_MAX_MOVE = 0.5;
@@ -135,25 +135,17 @@ const update = dt => {
 	player.velocity.y -= GRAVITY * dt;
 	player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
 
-	if (distance < 0.1) {
-		const forward = new THREE.Vector3();
-		camera.getWorldDirection(forward);
-		const right = new THREE.Vector3().crossVectors(forward, normal);
-		forward.crossVectors(normal, right);
+	const grounded = distance < 0.1;
+	const up = grounded? normal: new THREE.Vector3(0, 1, 0);
 
-		right.setLength(!!keys.d - !!keys.a);
-		forward.setLength(!!keys.w - !!keys.s);
-
-		const vertical = player.velocity.y;
-		player.velocity.lerp(forward.add(right).setLength(MOVE), dt * 20);
-		player.velocity.y = vertical;
-	} else {
-		const horizontal = new THREE
-			.Vector3(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w)
-			.applyMatrix4(new THREE.Matrix4().extractRotation(camera.matrix))
-			.setY(0).setLength(MOVE);
-		player.velocity.add(horizontal.setLength(FLY * dt));
-	}
+	const forward = new THREE.Vector3();
+	camera.getWorldDirection(forward);
+	const right = new THREE.Vector3().crossVectors(forward, up);
+	forward.crossVectors(up, right);
+	right.setLength(!!keys.d - !!keys.a);
+	forward.setLength(!!keys.w - !!keys.s);
+	if (grounded) player.velocity.lerp(forward.add(right).setLength(MOVE), dt * 20);
+	else          player.velocity.add(forward.add(right).setLength(FLY * dt));
 };
 
 let then = undefined;
