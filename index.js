@@ -33,6 +33,13 @@ const cubes = new THREE.InstancedMesh(
 );
 scene.add(cubes);
 
+const plane = new THREE.Mesh(
+	new THREE.PlaneGeometry(DIST_TO_CENTER * 2, DIST_TO_CENTER * 2),
+	new THREE.MeshBasicMaterial()
+);
+plane.geometry.rotateX(-Math.PI / 2)
+scene.add(plane);
+
 const blocker = document.getElementById("blocker");
 blocker.addEventListener("click", blocker.requestPointerLock);
 document.addEventListener("pointerlockchange", e => {
@@ -46,14 +53,8 @@ document.addEventListener("pointerlockchange", e => {
 });
 
 const keys = {};
-let keysThisFrame = {};
-document.addEventListener("keydown", event => {
-	if (!keys[event.key]) keysThisFrame[event.key] = true;
-	keys[event.key] = true;
-});
-document.addEventListener("keyup", event => {
-	keys[event.key] = false;
-});
+document.addEventListener("keydown", event => keys[event.key] = true);
+document.addEventListener("keyup", event => keys[event.key] = false);
 document.addEventListener("mousemove", event => {
 	if (!document.pointerLockElement) return;
 	const euler = new THREE.Euler(0, 0, 0, "YXZ").setFromQuaternion(camera.quaternion);
@@ -63,10 +64,10 @@ document.addEventListener("mousemove", event => {
 	camera.quaternion.setFromEuler(euler);
 });
 
-const distanceToCubes = point => {
+const distanceToWorld = point => {
 	const matrix = new THREE.Matrix4();
 	const vector = new THREE.Vector3();
-	let distance = Infinity;
+	let distance = point.y; // distance to ground plane
 	for (let i = 0; i < cubes.count; ++i) {
 		cubes.getMatrixAt(i, matrix);
 		vector.copy(point).applyMatrix4(matrix.invert());
@@ -79,9 +80,11 @@ const distanceToCubes = point => {
 };
 
 const player = {
-	position: new THREE.Vector3(),
-	velocity: new THREE.Vector3(),
+	position: new THREE.Vector3(0, 1, 0),
+	velocity: new THREE.Vector3(0, 0, 0),
+	jumped: false,
 };
+camera.position.copy(player.position);
 
 const update = dt => {
 	{
@@ -117,20 +120,23 @@ const update = dt => {
 			}
 		}
 		cubes.instanceMatrix.needsUpdate = true;
+
+		plane.position.x = player.position.x;
+		plane.position.z = player.position.z;
 	}
 
-	const distance = (distanceToCubes(player.position) - 0.5) - EPSILON;
+	const distance = (distanceToWorld(player.position) - 0.5) - EPSILON;
 	
 	const movement = player.velocity.length() * dt;
 	const direction = player.velocity.clone();
 	player.position.add(direction.setLength(Math.min(movement, distance)));	
 	const normal = new THREE.Vector3(
-		distanceToCubes(new THREE.Vector3( EPSILON, 0, 0).add(player.position)) -
-		distanceToCubes(new THREE.Vector3(-EPSILON, 0, 0).add(player.position)),
-		distanceToCubes(new THREE.Vector3(0,  EPSILON, 0).add(player.position)) -
-		distanceToCubes(new THREE.Vector3(0, -EPSILON, 0).add(player.position)),
-		distanceToCubes(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
-		distanceToCubes(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
+		distanceToWorld(new THREE.Vector3( EPSILON, 0, 0).add(player.position)) -
+		distanceToWorld(new THREE.Vector3(-EPSILON, 0, 0).add(player.position)),
+		distanceToWorld(new THREE.Vector3(0,  EPSILON, 0).add(player.position)) -
+		distanceToWorld(new THREE.Vector3(0, -EPSILON, 0).add(player.position)),
+		distanceToWorld(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
+		distanceToWorld(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
 	);
 	direction.setLength(Math.max(movement - distance, 0));
 	if (direction.dot(normal) < 0) {
@@ -155,9 +161,12 @@ const update = dt => {
 	if (grounded) player.velocity.lerp(forward.add(right).setLength(MOVE), dt * 20);
 	else          player.velocity.add(forward.add(right).setLength(FLY * dt));
 
-	if (grounded && keysThisFrame[" "]) {
+	if (grounded && !player.jumped && keys[" "]) {
 		player.velocity.add(player.velocity.clone().projectOnPlane(normal).multiplyScalar(BUUST));
 		player.velocity.add(normal.clone().setLength(JUMP));
+		player.jumped = true;
+	} else if (player.jumped && !grounded) {
+		player.jumped = false;
 	}
 };
 
