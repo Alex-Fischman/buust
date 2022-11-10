@@ -3,6 +3,7 @@ const GRAVITY = 5;
 const DRAG = 0.1;
 const FLY = 2;
 const JUMP = 15;
+const BUUST = 1.1;
 
 const CUBES_PER_SIDE = 10;
 const CUBES_MAX_MOVE = 0.5;
@@ -154,8 +155,10 @@ const update = dt => {
 	if (grounded) player.velocity.lerp(forward.add(right).setLength(MOVE), dt * 20);
 	else          player.velocity.add(forward.add(right).setLength(FLY * dt));
 
-	if (grounded && keysThisFrame[" "])
+	if (grounded && keysThisFrame[" "]) {
+		player.velocity.add(player.velocity.clone().projectOnPlane(normal).multiplyScalar(BUUST));
 		player.velocity.add(normal.clone().setLength(JUMP));
+	}
 };
 
 let then = undefined;
