@@ -1,9 +1,11 @@
-const MOVE = 2;
 const GRAVITY = 5;
-const DRAG = 0.1;
-const FLY = 2;
-const JUMP = 10;
-const BUUST = 1.2;
+const DRAG = 0.25;
+const BOUNCE = 0.9;
+
+const MOVE = 5;
+const BUUST = 10;
+const BUUST_DISTANCE = 1;
+const BUUST_SLOWDOWN = 0.5;
 
 const CUBES_PER_SIDE = 10;
 const CUBES_MAX_MOVE = 0.5;
@@ -33,13 +35,6 @@ const cubes = new THREE.InstancedMesh(
 );
 scene.add(cubes);
 
-const plane = new THREE.Mesh(
-	new THREE.PlaneGeometry(DIST_TO_CENTER * 2, DIST_TO_CENTER * 2),
-	new THREE.MeshBasicMaterial()
-);
-plane.geometry.rotateX(-Math.PI / 2)
-scene.add(plane);
-
 const blocker = document.getElementById("blocker");
 blocker.addEventListener("click", blocker.requestPointerLock);
 document.addEventListener("pointerlockchange", e => {
@@ -67,7 +62,7 @@ document.addEventListener("mousemove", event => {
 const distanceToWorld = point => {
 	const matrix = new THREE.Matrix4();
 	const vector = new THREE.Vector3();
-	let distance = point.y; // distance to ground plane
+	let distance = Infinity;
 	for (let i = 0; i < cubes.count; ++i) {
 		cubes.getMatrixAt(i, matrix);
 		vector.copy(point).applyMatrix4(matrix.invert());
@@ -82,7 +77,7 @@ const distanceToWorld = point => {
 const player = {
 	position: new THREE.Vector3(0, 1, 0),
 	velocity: new THREE.Vector3(0, 0, 0),
-	jumped: false,
+	buusted: false,
 };
 camera.position.copy(player.position);
 
@@ -120,9 +115,6 @@ const update = dt => {
 			}
 		}
 		cubes.instanceMatrix.needsUpdate = true;
-
-		plane.position.x = player.position.x;
-		plane.position.z = player.position.z;
 	}
 
 	const distance = (distanceToWorld(player.position) - 0.5) - EPSILON;
@@ -137,35 +129,27 @@ const update = dt => {
 		distanceToWorld(new THREE.Vector3(0, -EPSILON, 0).add(player.position)),
 		distanceToWorld(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
 		distanceToWorld(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
-	);
+	).normalize();
 	direction.setLength(Math.max(movement - distance, 0));
 	if (direction.dot(normal) < 0) {
-		direction.projectOnPlane(normal);
-		player.velocity.projectOnPlane(normal);
+		direction.reflect(normal);
+		player.velocity.reflect(normal).multiplyScalar(BOUNCE);
+		player.buusted = false;
 	}
 	player.position.add(direction);
 	camera.position.lerp(player.position, dt * 10);
 
 	player.velocity.y -= GRAVITY * dt;
 	player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
-
-	const grounded = distance < 0.1;
-	const up = grounded? normal: new THREE.Vector3(0, 1, 0);
-
-	const forward = new THREE.Vector3();
-	camera.getWorldDirection(forward);
-	const right = new THREE.Vector3().crossVectors(forward, up);
-	forward.crossVectors(up, right);
-	right.setLength(!!keys.d - !!keys.a);
-	forward.setLength(!!keys.w - !!keys.s);
-	if (grounded) player.velocity.lerp(forward.add(right).setLength(MOVE), dt * 20);
-	else          player.velocity.add(forward.add(right).setLength(FLY * dt));
-
-	if (grounded && !player.jumped && keys[" "]) {
-		player.velocity.add(normal.clone().setLength(JUMP));
-		player.jumped = true;
-	} else if (player.jumped && !grounded) {
-		player.jumped = false;
+	player.velocity.add(new THREE.Vector3(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w)
+		.applyMatrix4(new THREE.Matrix4().extractRotation(camera.matrix))
+		.setY(0).setLength(MOVE * dt));
+	
+	if (keys[" "] && !player.buusted && distance > BUUST_DISTANCE) {
+		camera.getWorldDirection(direction);
+		player.velocity.multiplyScalar(BUUST_SLOWDOWN).add(direction.setLength(BUUST));
+		player.buusted = true;
+		console.log("BUUST");
 	}
 };
 
