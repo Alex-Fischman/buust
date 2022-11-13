@@ -162,7 +162,6 @@ const update = dt => {
 	else          player.velocity.add(forward.add(right).setLength(FLY * dt));
 
 	if (grounded && !player.jumped && keys[" "]) {
-		player.velocity.add(player.velocity.clone().projectOnPlane(normal).multiplyScalar(BUUST));
 		player.velocity.add(normal.clone().setLength(JUMP));
 		player.jumped = true;
 	} else if (player.jumped && !grounded) {
