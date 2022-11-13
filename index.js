@@ -5,7 +5,7 @@ const BOUNCE = 0.9;
 const MOVE = 5;
 const BUUST = 10;
 const BUUST_DISTANCE = 1;
-const BUUST_SLOWDOWN = 0.5;
+const BUUST_SLOWDOWN = 0.25;
 
 const CUBES_PER_SIDE = 10;
 const CUBES_MAX_MOVE = 0.5;
@@ -149,7 +149,6 @@ const update = dt => {
 		camera.getWorldDirection(direction);
 		player.velocity.multiplyScalar(BUUST_SLOWDOWN).add(direction.setLength(BUUST));
 		player.buusted = true;
-		console.log("BUUST");
 	}
 };
 
