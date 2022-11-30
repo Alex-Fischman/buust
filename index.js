@@ -74,31 +74,6 @@ const update = dt => {
 	}
 
 	{
-		const distance = distanceToWorld(player.position) - player.RADIUS;
-		// move unobstructed
-		const movement = player.velocity.length() * dt;
-		const direction = player.velocity.clone();
-		player.position.add(direction.clone().setLength(Math.min(movement, distance)));	
-		// slide obstructed
-		const EPSILON = 0.001;
-		const normal = new THREE.Vector3(
-			distanceToWorld(new THREE.Vector3( EPSILON, 0, 0).add(player.position)) -
-			distanceToWorld(new THREE.Vector3(-EPSILON, 0, 0).add(player.position)),
-			distanceToWorld(new THREE.Vector3(0,  EPSILON, 0).add(player.position)) -
-			distanceToWorld(new THREE.Vector3(0, -EPSILON, 0).add(player.position)),
-			distanceToWorld(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
-			distanceToWorld(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
-		).normalize();
-		direction.setLength(Math.max(movement - distance, 0));
-		if (direction.dot(normal) < 0) {
-			direction.projectOnPlane(normal);
-			player.velocity.projectOnPlane(normal);
-		}
-		player.position.add(direction);
-		camera.position.copy(player.position);
-	}
-
-	{
 		const dy = player.velocity.y - player.GRAVITY * dt;
 		player.velocity.y = 0;
 
@@ -111,6 +86,34 @@ const update = dt => {
 
 		player.velocity.y = dy;
 	}
+
+	{
+		const distance = distanceToWorld(player.position) - player.RADIUS;
+		const movement = player.velocity.length() * dt;
+		const unobstructed = Math.min(movement, distance);
+		const   obstructed = Math.max(movement - distance, 0);
+		
+		player.position.add(player.velocity.clone().setLength(unobstructed));
+		
+		const EPSILON = 0.001;
+		const normal = new THREE.Vector3(
+			distanceToWorld(new THREE.Vector3( EPSILON, 0, 0).add(player.position)) -
+			distanceToWorld(new THREE.Vector3(-EPSILON, 0, 0).add(player.position)),
+			distanceToWorld(new THREE.Vector3(0,  EPSILON, 0).add(player.position)) -
+			distanceToWorld(new THREE.Vector3(0, -EPSILON, 0).add(player.position)),
+			distanceToWorld(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
+			distanceToWorld(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
+		).normalize();
+		
+		const direction = player.velocity.clone().setLength(obstructed);
+		if (direction.dot(normal) < 0) {
+			direction.projectOnPlane(normal);
+			player.velocity.projectOnPlane(normal);
+		}
+		player.position.add(direction);
+	}
+
+	camera.position.copy(player.position);
 };
 
 let then = undefined;
