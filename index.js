@@ -1,3 +1,21 @@
+//	Jump: Space
+//		Works off of any surface
+//	Buust: Shift
+//		Changes attacks and blocks
+//		Initial moment based off of current momentum, then you get drifts
+//		Dive?
+//	Punch: LMB
+//		1-2-3 sequence if used repeatedly
+//		Heavy attack if buusting
+//		Slam attack if diving
+//		Context-sensitive execution?
+//	Block: RMB
+//		Parry if timed correctly, stuns enemy
+//		Knockpack if ram while buusting
+//		Pogo if diving?
+//	Interact: E or Q
+//		Shove: E and Q?
+
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(90, 1, 1e-5, 1e5);
 const renderer = new THREE.WebGLRenderer();
