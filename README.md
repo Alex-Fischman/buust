@@ -1,2 +1,2 @@
 # buust
-3D First-Person Platforming Game
+3D Game
