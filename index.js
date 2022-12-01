@@ -78,60 +78,70 @@ document.addEventListener("mousemove", event => {
 const player = {
 	position: new THREE.Vector3(0, 1, 0),
 	velocity: new THREE.Vector3(0, 0, 0),
-	RADIUS: 	0.5,	// m
-	WALK: 		1,		// m/s
-	GRAVITY: 	10,		// m/s/s
+	jumped: false,
+	grounded: false,
 };
+const RADIUS = 0.5;
+const JUMP_DIST = 1;
+const JUMP_HEIGHT = 2;
+const WALK_SPEED = 1;
+const JUMP_TIME = JUMP_DIST / WALK_SPEED;
+const GRAVITY = 4 * JUMP_HEIGHT / JUMP_TIME / JUMP_TIME;
+const JUMP_IMPULSE = 4 * JUMP_HEIGHT / JUMP_TIME;
 
 const distanceToWorld = point => point.y;
 
 const update = dt => {
-	{
-		floor.position.copy(player.position).floor();
-		floor.position.y = 0;
+	floor.position.copy(player.position).floor();
+	floor.position.y = 0;
+
+	const distance = distanceToWorld(player.position) - RADIUS;
+	const movement = player.velocity.length() * dt;
+	const unobstructed = Math.min(movement, distance);
+	const   obstructed = Math.max(movement - distance, 0);
+	
+	player.position.add(player.velocity.clone().setLength(unobstructed));
+	
+	const EPSILON = 0.001;
+	const normal = new THREE.Vector3(
+		distanceToWorld(new THREE.Vector3( EPSILON, 0, 0).add(player.position)) -
+		distanceToWorld(new THREE.Vector3(-EPSILON, 0, 0).add(player.position)),
+		distanceToWorld(new THREE.Vector3(0,  EPSILON, 0).add(player.position)) -
+		distanceToWorld(new THREE.Vector3(0, -EPSILON, 0).add(player.position)),
+		distanceToWorld(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
+		distanceToWorld(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
+	).normalize();
+	
+	const direction = player.velocity.clone().setLength(obstructed);
+	if (direction.dot(normal) < 0) {
+		direction.projectOnPlane(normal);
+		player.velocity.projectOnPlane(normal);
 	}
-
-	{
-		const dy = player.velocity.y - player.GRAVITY * dt;
-		player.velocity.y = 0;
-
-		const walk = new THREE.Vector3(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w);
-		const rotate = new THREE.Euler();
-		rotate.order = "YXZ";
-		rotate.setFromRotationMatrix(camera.matrix);
-		walk.applyEuler(rotate.set(0, rotate.y, 0)).setLength(player.WALK);
-		player.velocity.lerp(walk, 0.2);
-
-		player.velocity.y = dy;
-	}
-
-	{
-		const distance = distanceToWorld(player.position) - player.RADIUS;
-		const movement = player.velocity.length() * dt;
-		const unobstructed = Math.min(movement, distance);
-		const   obstructed = Math.max(movement - distance, 0);
-		
-		player.position.add(player.velocity.clone().setLength(unobstructed));
-		
-		const EPSILON = 0.001;
-		const normal = new THREE.Vector3(
-			distanceToWorld(new THREE.Vector3( EPSILON, 0, 0).add(player.position)) -
-			distanceToWorld(new THREE.Vector3(-EPSILON, 0, 0).add(player.position)),
-			distanceToWorld(new THREE.Vector3(0,  EPSILON, 0).add(player.position)) -
-			distanceToWorld(new THREE.Vector3(0, -EPSILON, 0).add(player.position)),
-			distanceToWorld(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
-			distanceToWorld(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
-		).normalize();
-		
-		const direction = player.velocity.clone().setLength(obstructed);
-		if (direction.dot(normal) < 0) {
-			direction.projectOnPlane(normal);
-			player.velocity.projectOnPlane(normal);
-		}
-		player.position.add(direction);
-	}
+	player.position.add(direction);
 
 	camera.position.copy(player.position);
+
+	const vy = player.velocity.y - GRAVITY * dt;
+	player.velocity.y = 0;
+
+	const walk = new THREE.Vector3(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w);
+	const rotate = new THREE.Euler();
+	rotate.order = "YXZ";
+	rotate.setFromRotationMatrix(camera.matrix);
+	walk.applyEuler(rotate.set(0, rotate.y, 0)).setLength(WALK_SPEED);
+	player.velocity.lerp(walk, 0.2);
+
+	player.velocity.y = vy;
+
+	if (distance < EPSILON * 2) {
+		if (!player.jumped && keys[" "]) {
+			console.log("JUMP");
+			player.velocity.add(normal.setLength(JUMP_IMPULSE));
+			player.jumped = true;
+		}
+	} else {
+		if (player.jumped) player.jumped = false;
+	}
 };
 
 let then = undefined;
