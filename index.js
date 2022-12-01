@@ -82,11 +82,11 @@ const player = {
 	grounded: false,
 };
 const RADIUS = 0.5;
-const JUMP_DIST = 1;
 const JUMP_HEIGHT = 2;
-const WALK_SPEED = 1;
-const JUMP_TIME = JUMP_DIST / WALK_SPEED;
-const GRAVITY = 4 * JUMP_HEIGHT / JUMP_TIME / JUMP_TIME;
+const JUMP_TIME = 1;
+const JUMP_DIST = 2;
+const WALK_SPEED = JUMP_DIST / JUMP_TIME;
+const GRAVITY = 8 * JUMP_HEIGHT / JUMP_TIME / JUMP_TIME;
 const JUMP_IMPULSE = 4 * JUMP_HEIGHT / JUMP_TIME;
 
 const distanceToWorld = point => point.y;
