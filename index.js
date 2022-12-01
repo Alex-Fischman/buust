@@ -19,14 +19,18 @@
 const RADIUS = 0.5;
 const JUMP_HEIGHT = 2;
 const JUMP_TIME = 1;
-const JUMP_DIST = 3;
+const JUMP_DIST = 4;
+const SPEED = JUMP_DIST / JUMP_TIME;
 const GRAVITY = 8 * JUMP_HEIGHT / JUMP_TIME / JUMP_TIME;
 const JUMP_IMPULSE = 4 * JUMP_HEIGHT / JUMP_TIME;
 
-const WALK_SPEED = JUMP_DIST / JUMP_TIME;
-const WALK_ACCEL_TIME = 0.1;
-const WALK_ACCEL = WALK_SPEED / WALK_ACCEL_TIME;
-const WALK_DRAG = WALK_ACCEL / WALK_SPEED;
+const WALK_ACCEL_TIME = 0.05;
+const WALK_ACCEL = SPEED / WALK_ACCEL_TIME;
+const WALK_DRAG = 1 / WALK_ACCEL_TIME;
+
+const FLY_ACCEL_TIME = 0.5;
+const FLY_ACCEL = SPEED / FLY_ACCEL_TIME;
+const FLY_DRAG = 1 / FLY_ACCEL_TIME;
 
 const CAMERA_DIST = 2;
 
@@ -176,9 +180,12 @@ const update = dt => {
 	const rotate = new THREE.Euler();
 	rotate.order = "YXZ";
 	rotate.setFromRotationMatrix(camera.matrix);
-	walk.applyEuler(rotate.set(0, rotate.y, 0)).setLength(WALK_ACCEL * dt);
-	player.velocity.add(walk);
-	player.velocity.add(player.velocity.clone().multiplyScalar(-WALK_DRAG * dt));
+	walk.applyEuler(rotate.set(0, rotate.y, 0));
+	const ACCEL = grounded? WALK_ACCEL: FLY_ACCEL;
+	const DRAG = grounded? WALK_DRAG: FLY_DRAG;
+	player.velocity.add(walk.setLength(ACCEL * dt));
+	player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
+	
 
 	player.velocity.y = vy;
 
