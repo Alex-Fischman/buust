@@ -16,6 +16,16 @@
 //	Interact: E or Q
 //		Shove: E and Q?
 
+const RADIUS = 0.5;
+const JUMP_HEIGHT = 2;
+const JUMP_TIME = 1;
+const JUMP_DIST = 3;
+const WALK_SPEED = JUMP_DIST / JUMP_TIME;
+const GRAVITY = 8 * JUMP_HEIGHT / JUMP_TIME / JUMP_TIME;
+const JUMP_IMPULSE = 4 * JUMP_HEIGHT / JUMP_TIME;
+
+const CAMERA_DIST = 2;
+
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(90, 1, 1e-5, 1e5);
 const renderer = new THREE.WebGLRenderer();
@@ -29,10 +39,9 @@ window.addEventListener("resize", () => {
 });
 window.dispatchEvent(new Event("resize"));
 
-scene.fog = new THREE.Fog(0x000000, 1, 100);
+scene.fog = new THREE.Fog(0x000000, 1, 50);
 
-const floor = (() => {
-	const FLOOR_SIZE = 100;
+const loadPrototypeMaterial = (width, height) => {
 	const URL_1 = "https://raw.githubusercontent.com/gsimone/gridbox-";
 	const URL_2 = "prototype-materials/main/prototype_512x512_blue1.png";
 	const texture = new THREE.TextureLoader().load(
@@ -41,14 +50,26 @@ const floor = (() => {
 	);
 	texture.wrapS = THREE.RepeatWrapping;
 	texture.wrapT = THREE.RepeatWrapping;
-	texture.repeat.set(FLOOR_SIZE, FLOOR_SIZE);
+	texture.repeat.set(width, height);
+	return new THREE.MeshBasicMaterial({map: texture});
+};
+
+const floor = (() => {
+	const FLOOR_SIZE = 100;
 	const floor = new THREE.Mesh(
 		new THREE.PlaneGeometry(FLOOR_SIZE, FLOOR_SIZE).rotateX(-Math.PI / 2),
-		new THREE.MeshBasicMaterial({map: texture}),
+		loadPrototypeMaterial(FLOOR_SIZE, FLOOR_SIZE),
 	);
 	scene.add(floor);
 	return floor;
 })();
+
+const cube = new THREE.Mesh(
+	new THREE.BoxGeometry(2, 2, 2),
+	loadPrototypeMaterial(2, 2),
+);
+cube.position.set(0, cube.scale.y, -5);
+scene.add(cube);
 
 const blocker = document.getElementById("blocker");
 blocker.addEventListener("click", blocker.requestPointerLock);
@@ -63,8 +84,15 @@ document.addEventListener("pointerlockchange", e => {
 });
 
 const keys = {};
-document.addEventListener("keydown", event => keys[event.key] = true);
-document.addEventListener("keyup", event => keys[event.key] = false);
+const keysJustPressed = {};
+document.addEventListener("keydown", event => {
+	keys[event.key] = true;
+	keysJustPressed[event.key] = true;
+});
+document.addEventListener("keyup", event => {
+	keys[event.key] = false;
+	keysJustPressed[event.key] = false;
+});
 document.addEventListener("mousemove", event => {
 	if (!document.pointerLockElement) return;
 	const euler = new THREE.Euler(0, 0, 0, "YXZ")
@@ -78,18 +106,44 @@ document.addEventListener("mousemove", event => {
 const player = {
 	position: new THREE.Vector3(0, 1, 0),
 	velocity: new THREE.Vector3(0, 0, 0),
-	jumped: false,
-	grounded: false,
+	model: new THREE.Mesh(
+		new THREE.SphereGeometry(RADIUS),
+		new THREE.MeshBasicMaterial(),
+	),
 };
-const RADIUS = 0.5;
-const JUMP_HEIGHT = 2;
-const JUMP_TIME = 1;
-const JUMP_DIST = 2;
-const WALK_SPEED = JUMP_DIST / JUMP_TIME;
-const GRAVITY = 8 * JUMP_HEIGHT / JUMP_TIME / JUMP_TIME;
-const JUMP_IMPULSE = 4 * JUMP_HEIGHT / JUMP_TIME;
+scene.add(player.model);
 
-const distanceToWorld = point => point.y;
+const distanceToCube = (point, cube) => {
+	const vector = point.clone().applyMatrix4(cube.matrix.clone().invert());
+	vector.fromArray(vector.toArray().map(Math.abs)).subScalar(1);
+	const a = Math.min(0, Math.max(vector.x, vector.y, vector.z));
+	const b = vector.max(new THREE.Vector3()).length();
+	return a + b;
+};
+
+const distanceToWorld = point => Math.min(point.y, distanceToCube(point, cube));
+
+const EPSILON = 0.001;
+const normalToWorld = point => new THREE.Vector3(
+	distanceToWorld(new THREE.Vector3( EPSILON, 0, 0).add(point)) -
+	distanceToWorld(new THREE.Vector3(-EPSILON, 0, 0).add(point)),
+	distanceToWorld(new THREE.Vector3(0,  EPSILON, 0).add(point)) -
+	distanceToWorld(new THREE.Vector3(0, -EPSILON, 0).add(point)),
+	distanceToWorld(new THREE.Vector3(0, 0,  EPSILON).add(point)) -
+	distanceToWorld(new THREE.Vector3(0, 0, -EPSILON).add(point)),
+).normalize();
+
+const raymarch = (position, direction, minDist, maxIter) => {
+	let distance = 0;
+	let iterations = 0;
+	while (true) {
+		const p = direction.clone().setLength(distance).add(position);
+		const d = distanceToWorld(p);
+		distance += d;
+		if (Math.abs(d) < minDist || iterations >= maxIter) return distance;
+		iterations++;
+	}
+};
 
 const update = dt => {
 	floor.position.copy(player.position).floor();
@@ -102,24 +156,14 @@ const update = dt => {
 	
 	player.position.add(player.velocity.clone().setLength(unobstructed));
 	
-	const EPSILON = 0.001;
-	const normal = new THREE.Vector3(
-		distanceToWorld(new THREE.Vector3( EPSILON, 0, 0).add(player.position)) -
-		distanceToWorld(new THREE.Vector3(-EPSILON, 0, 0).add(player.position)),
-		distanceToWorld(new THREE.Vector3(0,  EPSILON, 0).add(player.position)) -
-		distanceToWorld(new THREE.Vector3(0, -EPSILON, 0).add(player.position)),
-		distanceToWorld(new THREE.Vector3(0, 0,  EPSILON).add(player.position)) -
-		distanceToWorld(new THREE.Vector3(0, 0, -EPSILON).add(player.position)),
-	).normalize();
-	
+	const normal = normalToWorld(player.position);
 	const direction = player.velocity.clone().setLength(obstructed);
-	if (direction.dot(normal) < 0) {
+	const grounded = direction.dot(normal) < 0;
+	if (grounded) {
 		direction.projectOnPlane(normal);
 		player.velocity.projectOnPlane(normal);
 	}
 	player.position.add(direction);
-
-	camera.position.copy(player.position);
 
 	const vy = player.velocity.y - GRAVITY * dt;
 	player.velocity.y = 0;
@@ -133,14 +177,17 @@ const update = dt => {
 
 	player.velocity.y = vy;
 
-	if (distance < EPSILON * 2) {
-		if (!player.jumped && keys[" "]) {
-			console.log("JUMP");
-			player.velocity.add(normal.setLength(JUMP_IMPULSE));
-			player.jumped = true;
-		}
-	} else {
-		if (player.jumped) player.jumped = false;
+	if (grounded && keys[" "]) player.velocity.add(normal.setLength(JUMP_IMPULSE));
+
+	player.model.position.copy(player.position);
+	camera.position.copy(player.position);
+
+	{
+		camera.getWorldDirection(direction);
+		direction.negate();
+		const d = raymarch(player.position, direction, EPSILON, 10);
+		const distance = Math.min(CAMERA_DIST, d - camera.near);
+		camera.position.copy(player.position).add(direction.setLength(distance));
 	}
 };
 
