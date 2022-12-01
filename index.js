@@ -1,5 +1,3 @@
-//	Jump: Space
-//		Works off of any surface
 //	Buust: Shift
 //		Changes attacks and blocks
 //		Initial moment based off of current momentum, then you get drifts
