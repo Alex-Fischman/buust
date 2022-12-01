@@ -20,9 +20,13 @@ const RADIUS = 0.5;
 const JUMP_HEIGHT = 2;
 const JUMP_TIME = 1;
 const JUMP_DIST = 3;
-const WALK_SPEED = JUMP_DIST / JUMP_TIME;
 const GRAVITY = 8 * JUMP_HEIGHT / JUMP_TIME / JUMP_TIME;
 const JUMP_IMPULSE = 4 * JUMP_HEIGHT / JUMP_TIME;
+
+const WALK_SPEED = JUMP_DIST / JUMP_TIME;
+const WALK_ACCEL_TIME = 0.1;
+const WALK_ACCEL = WALK_SPEED / WALK_ACCEL_TIME;
+const WALK_DRAG = WALK_ACCEL / WALK_SPEED;
 
 const CAMERA_DIST = 2;
 
@@ -172,15 +176,15 @@ const update = dt => {
 	const rotate = new THREE.Euler();
 	rotate.order = "YXZ";
 	rotate.setFromRotationMatrix(camera.matrix);
-	walk.applyEuler(rotate.set(0, rotate.y, 0)).setLength(WALK_SPEED);
-	player.velocity.lerp(walk, 0.2);
+	walk.applyEuler(rotate.set(0, rotate.y, 0)).setLength(WALK_ACCEL * dt);
+	player.velocity.add(walk);
+	player.velocity.add(player.velocity.clone().multiplyScalar(-WALK_DRAG * dt));
 
 	player.velocity.y = vy;
 
 	if (grounded && keys[" "]) player.velocity.add(normal.setLength(JUMP_IMPULSE));
 
 	player.model.position.copy(player.position);
-	camera.position.copy(player.position);
 
 	{
 		camera.getWorldDirection(direction);
