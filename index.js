@@ -8,7 +8,7 @@
 //		Slam attack if diving
 //		Context-sensitive execution?
 //	Block: RMB
-//		Parry if timed correctly, stuns enemy
+//		Parry if release is timed correctly, stuns enemy
 //		Knockpack if ram while buusting
 //		Pogo if diving?
 //	Interact: E or Q
@@ -94,15 +94,24 @@ document.addEventListener("pointerlockchange", e => {
 	}
 });
 
-const keys = {};
-const keysJustPressed = {};
+const input = {};
+const inputDownThisFrame = {};
+const inputUpThisFrame = {};
 document.addEventListener("keydown", event => {
-	keys[event.key] = true;
-	keysJustPressed[event.key] = true;
+	input[event.key] = true;
+	inputDownThisFrame[event.key] = true;
 });
 document.addEventListener("keyup", event => {
-	keys[event.key] = false;
-	keysJustPressed[event.key] = false;
+	input[event.key] = false;
+	inputUpThisFrame[event.key] = true;
+});
+document.addEventListener("mousedown", () => {
+	input.mouse = true;
+	inputDownThisFrame.mouse = true;
+});
+document.addEventListener("mouseup", () => {
+	input.mouse = false;
+	inputUpThisFrame.mouse = true;
 });
 document.addEventListener("mousemove", event => {
 	if (!document.pointerLockElement) return;
@@ -177,7 +186,7 @@ const update = dt => {
 	const vy = player.velocity.y - GRAVITY * dt;
 	player.velocity.y = 0;
 
-	const walk = new THREE.Vector3(!!keys.d - !!keys.a, 0, !!keys.s - !!keys.w);
+	const walk = new THREE.Vector3(!!input.d - !!input.a, 0, !!input.s - !!input.w);
 	const rotate = new THREE.Euler();
 	rotate.order = "YXZ";
 	rotate.setFromRotationMatrix(camera.matrix);
@@ -189,7 +198,7 @@ const update = dt => {
 
 	player.velocity.y = vy;
 
-	if (grounded && keys[" "]) player.velocity.add(normal.setLength(JUMP_IMPULSE));		
+	if (grounded && input[" "]) player.velocity.add(normal.setLength(JUMP_IMPULSE));		
 	
 	player.model.position.copy(player.position);
 
@@ -209,6 +218,8 @@ const frame = now => {
 	let extra = (now - then) / 1000 || 1/60;
 	while (extra >= TICK_TIME) {
 		update(TICK_TIME);
+		for (const i in inputDownThisFrame) delete inputDownThisFrame[i];
+		for (const i in inputUpThisFrame)   delete inputUpThisFrame[i];
 		extra -= TICK_TIME;
 	}
 	then = now - extra;
