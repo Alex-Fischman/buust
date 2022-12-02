@@ -153,9 +153,6 @@ const raymarch = (position, direction, minDist, maxIter) => {
 	}
 };
 
-const normalHelper = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), player.position, 1, 0xff0000);
-scene.add(normalHelper);
-
 const update = dt => {
 	floor.position.copy(player.position).floor();
 	floor.position.y = 0;
@@ -194,8 +191,6 @@ const update = dt => {
 	if (grounded && keys[" "]) player.velocity.add(normal.setLength(JUMP_IMPULSE));		
 	
 	player.model.position.copy(player.position);
-	normalHelper.position.copy(player.position);
-	normalHelper.setDirection(normal);
 
 	{
 		const direction = new THREE.Vector3();
