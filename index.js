@@ -172,7 +172,7 @@ const update = dt => {
 	player.velocity.y = vy;
 
 	if (grounded && key(" ")) {
-		player.velocity.add(new THREE.Vector3(0, 1, 0).setLength(JUMP_AMOUNT_VERTICAL));
+		player.velocity.y = JUMP_AMOUNT_VERTICAL;
 		player.velocity.add(normal.setLength(JUMP_AMOUNT_NON_VERTICAL));
 	}
 	
