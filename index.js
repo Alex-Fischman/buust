@@ -120,6 +120,7 @@ const player = {
 scene.add(player.model);
 
 const distanceToCube = (point, cube) => {
+	cube.updateMatrixWorld(false);
 	const vector = point.clone().applyMatrix4(cube.matrix.clone().invert());
 	vector.fromArray(vector.toArray().map(Math.abs)).subScalar(1);
 	const a = Math.min(0, Math.max(vector.x, vector.y, vector.z));
@@ -150,6 +151,9 @@ const raymarch = (position, direction, minDist, maxIter) => {
 		iterations++;
 	}
 };
+
+const normalHelper = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), player.position, 1, 0xff0000);
+scene.add(normalHelper);
 
 const update = dt => {
 	floor.position.copy(player.position).floor();
@@ -184,18 +188,20 @@ const update = dt => {
 	player.velocity.add(walk.setLength(ACCEL * dt));
 	player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
 	
-
 	player.velocity.y = vy;
 
 	if (grounded && keys[" "]) player.velocity.add(normal.setLength(JUMP_IMPULSE));
 
 	player.model.position.copy(player.position);
+	normalHelper.position.copy(player.position);
+	normalHelper.setDirection(normal);
 
 	{
 		camera.getWorldDirection(direction);
 		direction.negate();
 		const d = raymarch(player.position, direction, EPSILON, 10);
-		const distance = Math.min(CAMERA_DIST, d - camera.near);
+		const minimumDistance = RADIUS / Math.atan(camera.fov / 2 * Math.PI / 180);
+		const distance = Math.max(Math.min(CAMERA_DIST, d - camera.near), minimumDistance);
 		camera.position.copy(player.position).add(direction.setLength(distance));
 	}
 };
