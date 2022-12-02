@@ -36,6 +36,7 @@ const FLY_DRAG = 1 / FLY_ACCEL_TIME;
 
 const CAMERA_DIST = 2;
 const TICK_TIME = 1 / 200;
+const EPSILON = 0.001;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(90, 1, 1e-5, 1e5);
@@ -107,12 +108,10 @@ const player = {
 };
 scene.add(player.model);
 
-
 const smoothMin = values => {
-	const K = 0.1;
 	const smoothMin = (a, b) => {
-		const h = Math.max(K - abs(a - b), 0) / K;
-		return Math.min(a, b) - h * h * K * 0.25;
+		const h = Math.max(EPSILON - abs(a - b), 0) / EPSILON;
+		return Math.min(a, b) - h * h * EPSILON * 0.25;
 	};
 	let result = smoothMin(values[0], values[1]);
 	for (let i = 2; i < values.length; ++i) result = smoothMin(result, values[i]);
@@ -127,7 +126,6 @@ const distanceToWorld = point => Math.min(point.y, ...cubes.map(cube => {
 	return a + b;
 }));
 
-const EPSILON = 0.001;
 const normalToWorld = point => new THREE.Vector3(
 	distanceToWorld(new THREE.Vector3( EPSILON, 0, 0).add(point)) -
 	distanceToWorld(new THREE.Vector3(-EPSILON, 0, 0).add(point)),
