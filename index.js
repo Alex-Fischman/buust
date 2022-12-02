@@ -22,11 +22,15 @@ const SPEED = JUMP_DIST / JUMP_TIME;
 const GRAVITY = 8 * JUMP_HEIGHT / JUMP_TIME / JUMP_TIME;
 const JUMP_IMPULSE = 4 * JUMP_HEIGHT / JUMP_TIME;
 
+const JUMP_PORTION_VERTICAL = 0.5; // for wall jumps
+const JUMP_AMOUNT_VERTICAL = JUMP_IMPULSE * JUMP_PORTION_VERTICAL;
+const JUMP_AMOUNT_NON_VERTICAL = JUMP_IMPULSE * (1 - JUMP_PORTION_VERTICAL);
+
 const WALK_ACCEL_TIME = 0.05;
 const WALK_ACCEL = SPEED / WALK_ACCEL_TIME;
 const WALK_DRAG = 1 / WALK_ACCEL_TIME;
 
-const FLY_ACCEL_TIME = 0.5;
+const FLY_ACCEL_TIME = 1;
 const FLY_ACCEL = SPEED / FLY_ACCEL_TIME;
 const FLY_DRAG = 1 / FLY_ACCEL_TIME;
 
@@ -167,7 +171,10 @@ const update = dt => {
 
 	player.velocity.y = vy;
 
-	if (grounded && key(" ")) player.velocity.add(normal.setLength(JUMP_IMPULSE));		
+	if (grounded && key(" ")) {
+		player.velocity.add(new THREE.Vector3(0, 1, 0).setLength(JUMP_AMOUNT_VERTICAL));
+		player.velocity.add(normal.setLength(JUMP_AMOUNT_NON_VERTICAL));
+	}
 	
 	player.model.position.copy(player.position);
 
