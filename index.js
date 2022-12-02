@@ -75,7 +75,7 @@ const cube = new THREE.Mesh(
 	new THREE.BoxGeometry(2, 2, 2),
 	loadPrototypeMaterial(2, 2),
 );
-cube.position.set(0, cube.scale.y, -5);
+cube.position.set(0, 1, -5);
 scene.add(cube);
 
 const blocker = document.getElementById("blocker");
