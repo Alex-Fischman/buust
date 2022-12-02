@@ -2,12 +2,12 @@ const keys = {};
 const keysDownThisFrame = {};
 const keysUpThisFrame = {};
 document.addEventListener("keydown", event => {
-	keys[event.key] = true;
-	keysDownThisFrame[event.key] = true;
+	keys[event.code] = true;
+	keysDownThisFrame[event.code] = true;
 });
 document.addEventListener("keyup", event => {
-	keys[event.key] = false;
-	keysUpThisFrame[event.key] = true;
+	keys[event.code] = false;
+	keysUpThisFrame[event.code] = true;
 });
 
 const mouseButtons = {};
@@ -22,9 +22,9 @@ document.addEventListener("mouseup", () => {
 	mouseButtonsUpThisFrame[event.button] = true;
 });
 
-function key        (key) { return !!keys[key]; }
-function keyPressed (key) { return !!keysDownThisFrame[key]; }
-function keyReleased(key) { return !!keysUpThisFrame[key]; }
+function key        (code) { return !!keys[code]; }
+function keyPressed (code) { return !!keysDownThisFrame[code]; }
+function keyReleased(code) { return !!keysUpThisFrame[code]; }
 
 function mouse        (button) { return !!mouseButtons[button]; }
 function mousePressed (button) { return !!mouseButtonsDownThisFrame[button]; }

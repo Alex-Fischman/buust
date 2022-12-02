@@ -34,6 +34,11 @@ const FLY_ACCEL_TIME = 1;
 const FLY_ACCEL = SPEED / FLY_ACCEL_TIME;
 const FLY_DRAG = 1 / FLY_ACCEL_TIME;
 
+const BUUST_SPEED = SPEED * 3;
+const BUUST_ACCEL_TIME = WALK_ACCEL_TIME;
+const BUUST_ACCEL = BUUST_SPEED / BUUST_ACCEL_TIME;
+const BUUST_DRAG = 1 / BUUST_ACCEL_TIME;
+
 const CAMERA_DIST = 2;
 const TICK_TIME = 1 / 200;
 const EPSILON = 0.001;
@@ -105,6 +110,7 @@ const player = {
 		new THREE.MeshBasicMaterial(),
 	),
 	jumped: false,
+	buust: new THREE.Vector3(),
 };
 scene.add(player.model);
 
@@ -170,7 +176,7 @@ const update = dt => {
 	const vy = player.velocity.y - GRAVITY * dt;
 	player.velocity.y = 0;
 
-	const walk = new THREE.Vector3(key("d") - key("a"), 0, key("s") - key("w"));
+	const walk = new THREE.Vector3(key("KeyD") - key("KeyA"), 0, key("KeyS") - key("KeyW"));
 	const rotate = new THREE.Euler();
 	rotate.order = "YXZ";
 	rotate.setFromRotationMatrix(camera.matrix);
@@ -179,17 +185,23 @@ const update = dt => {
 	const DRAG = grounded? WALK_DRAG: FLY_DRAG;
 	player.velocity.add(walk.setLength(ACCEL * dt));
 	player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
-
+	
 	player.velocity.y = vy;
 
-	if (!player.jumped && key(" ") && grounded) {
+	if (!player.jumped && key("Space") && grounded) {
 		player.velocity.y = JUMP_AMOUNT_VERTICAL;
 		player.velocity.add(normal.setLength(JUMP_AMOUNT_NON_VERTICAL));
 		player.jumped = true;
 	}
-	if (player.jumped && !key(" ")) player.jumped = false;
+	if (player.jumped && !key("Space")) player.jumped = false;
 	
 	player.model.position.copy(player.position);
+
+	if (keyPressed("ShiftLeft")) camera.getWorldDirection(player.buust);
+	if (key("ShiftLeft")) {
+		player.velocity.add(player.buust.setLength(BUUST_ACCEL * dt));
+		player.velocity.add(player.velocity.clone().multiplyScalar(-BUUST_DRAG * dt));
+	}
 
 	{
 		const direction = new THREE.Vector3();
