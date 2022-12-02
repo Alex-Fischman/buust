@@ -94,25 +94,6 @@ document.addEventListener("pointerlockchange", e => {
 	}
 });
 
-const input = {};
-const inputDownThisFrame = {};
-const inputUpThisFrame = {};
-document.addEventListener("keydown", event => {
-	input[event.key] = true;
-	inputDownThisFrame[event.key] = true;
-});
-document.addEventListener("keyup", event => {
-	input[event.key] = false;
-	inputUpThisFrame[event.key] = true;
-});
-document.addEventListener("mousedown", () => {
-	input.mouse = true;
-	inputDownThisFrame.mouse = true;
-});
-document.addEventListener("mouseup", () => {
-	input.mouse = false;
-	inputUpThisFrame.mouse = true;
-});
 document.addEventListener("mousemove", event => {
 	if (!document.pointerLockElement) return;
 	const euler = new THREE.Euler(0, 0, 0, "YXZ")
@@ -186,7 +167,7 @@ const update = dt => {
 	const vy = player.velocity.y - GRAVITY * dt;
 	player.velocity.y = 0;
 
-	const walk = new THREE.Vector3(!!input.d - !!input.a, 0, !!input.s - !!input.w);
+	const walk = new THREE.Vector3(key("d") - key("a"), 0, key("s") - key("w"));
 	const rotate = new THREE.Euler();
 	rotate.order = "YXZ";
 	rotate.setFromRotationMatrix(camera.matrix);
@@ -198,7 +179,7 @@ const update = dt => {
 
 	player.velocity.y = vy;
 
-	if (grounded && input[" "]) player.velocity.add(normal.setLength(JUMP_IMPULSE));		
+	if (grounded && key(" ")) player.velocity.add(normal.setLength(JUMP_IMPULSE));		
 	
 	player.model.position.copy(player.position);
 
@@ -211,6 +192,8 @@ const update = dt => {
 		const distance = Math.max(Math.min(CAMERA_DIST, d - camera.near), minimumDistance);
 		camera.position.copy(player.position).add(direction.setLength(distance));
 	}
+
+	updateInput();
 };
 
 let then = undefined;
@@ -218,8 +201,6 @@ const frame = now => {
 	let extra = (now - then) / 1000 || 1/60;
 	while (extra >= TICK_TIME) {
 		update(TICK_TIME);
-		for (const i in inputDownThisFrame) delete inputDownThisFrame[i];
-		for (const i in inputUpThisFrame)   delete inputUpThisFrame[i];
 		extra -= TICK_TIME;
 	}
 	then = now - extra;
