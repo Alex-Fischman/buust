@@ -7,6 +7,19 @@
 	</head>
 	<body>
 		<div id="blocker">Click to Play</div>
+		<script>
+			const blocker = document.getElementById("blocker");
+			blocker.addEventListener("click", blocker.requestPointerLock);
+			document.addEventListener("pointerlockchange", e => {
+				if (document.pointerLockElement) {
+					blocker.style.visibility = "hidden";
+					then = undefined;
+					requestAnimationFrame(frame);
+				} else {
+					blocker.style.visibility = "visible";
+				}
+			});
+		</script>
 		<script src="three.js"></script>
 		<script src="input.js"></script>
 		<script src="index.js"></script>

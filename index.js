@@ -82,18 +82,6 @@ const cubes = [[0, 1, -6], [0, 3, -7]].map(position => {
 	return cube;
 });
 
-const blocker = document.getElementById("blocker");
-blocker.addEventListener("click", blocker.requestPointerLock);
-document.addEventListener("pointerlockchange", e => {
-	if (document.pointerLockElement) {
-		blocker.style.visibility = "hidden";
-		then = undefined;
-		requestAnimationFrame(frame);
-	} else {
-		blocker.style.visibility = "visible";
-	}
-});
-
 document.addEventListener("mousemove", event => {
 	if (!document.pointerLockElement) return;
 	const euler = new THREE.Euler(0, 0, 0, "YXZ")
