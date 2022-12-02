@@ -75,7 +75,7 @@ const floor = (() => {
 	return floor;
 })();
 
-const cubes = [[0, 1, -6], [0, 3, -7]].map(position => {
+const cubes = [[0, 1, -6], [0, 3, -7], [4, 1, -7], [4, 3, -7]].map(position => {
 	const cube = new THREE.Mesh(
 		new THREE.BoxGeometry(2, 2, 2),
 		loadPrototypeMaterial(2, 2, "green")
@@ -147,7 +147,10 @@ const update = dt => {
 	
 	player.position.add(player.velocity.clone().setLength(unobstructed));
 	
-	const normal = normalToWorld(player.position);
+	const normal = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]
+		.map(([x, y, z]) => new THREE.Vector3(x, y, z).multiplyScalar(EPSILON))
+		.map(p => normalToWorld(p.add(player.position)))
+		.reduce((a, b) => a.add(b)).multiplyScalar(1 / 6);
 	const direction = player.velocity.clone().setLength(obstructed);
 	const grounded = direction.dot(normal) < 0;
 	if (grounded) {
