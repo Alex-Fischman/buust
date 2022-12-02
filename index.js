@@ -31,6 +31,7 @@ const FLY_ACCEL = SPEED / FLY_ACCEL_TIME;
 const FLY_DRAG = 1 / FLY_ACCEL_TIME;
 
 const CAMERA_DIST = 2;
+const TICK_TIME = 1 / 200;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(90, 1, 1e-5, 1e5);
@@ -187,16 +188,17 @@ const update = dt => {
 	const DRAG = grounded? WALK_DRAG: FLY_DRAG;
 	player.velocity.add(walk.setLength(ACCEL * dt));
 	player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
-	
+
 	player.velocity.y = vy;
 
-	if (grounded && keys[" "]) player.velocity.add(normal.setLength(JUMP_IMPULSE));
-
+	if (grounded && keys[" "]) player.velocity.add(normal.setLength(JUMP_IMPULSE));		
+	
 	player.model.position.copy(player.position);
 	normalHelper.position.copy(player.position);
 	normalHelper.setDirection(normal);
 
 	{
+		const direction = new THREE.Vector3();
 		camera.getWorldDirection(direction);
 		direction.negate();
 		const d = raymarch(player.position, direction, EPSILON, 10);
@@ -208,8 +210,12 @@ const update = dt => {
 
 let then = undefined;
 const frame = now => {
-	update((now - then) / 1000 || 1/60);
-	then = now;
+	let extra = (now - then) / 1000 || 1/60;
+	while (extra >= TICK_TIME) {
+		update(TICK_TIME);
+		extra -= TICK_TIME;
+	}
+	then = now - extra;
 
 	renderer.render(scene, camera);
 	if (document.pointerLockElement) requestAnimationFrame(frame);
