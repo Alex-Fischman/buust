@@ -103,6 +103,7 @@ const player = {
 		new THREE.SphereGeometry(RADIUS),
 		new THREE.MeshBasicMaterial(),
 	),
+	jumped: false,
 };
 scene.add(player.model);
 
@@ -183,10 +184,12 @@ const update = dt => {
 
 	player.velocity.y = vy;
 
-	if (grounded && keyPressed(" ")) {
+	if (!player.jumped && key(" ") && grounded) {
 		player.velocity.y = JUMP_AMOUNT_VERTICAL;
 		player.velocity.add(normal.setLength(JUMP_AMOUNT_NON_VERTICAL));
+		player.jumped = true;
 	}
+	if (player.jumped && !key(" ")) player.jumped = false;
 	
 	player.model.position.copy(player.position);
 
