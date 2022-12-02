@@ -48,9 +48,9 @@ window.dispatchEvent(new Event("resize"));
 
 scene.fog = new THREE.Fog(0x000000, 1, 50);
 
-const loadPrototypeMaterial = (width, height) => {
+const loadPrototypeMaterial = (width, height, color = "blue", index = 1) => {
 	const URL_1 = "https://raw.githubusercontent.com/gsimone/gridbox-";
-	const URL_2 = "prototype-materials/main/prototype_512x512_blue1.png";
+	const URL_2 = `prototype-materials/main/prototype_512x512_${color}${index}.png`;
 	const texture = new THREE.TextureLoader().load(
 		URL_1 + URL_2,
 		() => renderer.render(scene, camera),
@@ -71,12 +71,16 @@ const floor = (() => {
 	return floor;
 })();
 
-const cube = new THREE.Mesh(
-	new THREE.BoxGeometry(2, 2, 2),
-	loadPrototypeMaterial(2, 2),
-);
-cube.position.set(0, 1, -5);
-scene.add(cube);
+const cubes = [[0, 1, -6], [0, 3, -7]].map(position => {
+	const cube = new THREE.Mesh(
+		new THREE.BoxGeometry(2, 2, 2),
+		loadPrototypeMaterial(2, 2, "green")
+	);
+	cube.position.fromArray(position);
+	cube.updateMatrixWorld();
+	scene.add(cube);
+	return cube;
+});
 
 const blocker = document.getElementById("blocker");
 blocker.addEventListener("click", blocker.requestPointerLock);
@@ -120,16 +124,13 @@ const player = {
 };
 scene.add(player.model);
 
-const distanceToCube = (point, cube) => {
-	cube.updateMatrixWorld(false);
+const distanceToWorld = point => Math.min(point.y, ...cubes.map(cube => {
 	const vector = point.clone().applyMatrix4(cube.matrix.clone().invert());
 	vector.fromArray(vector.toArray().map(Math.abs)).subScalar(1);
 	const a = Math.min(0, Math.max(vector.x, vector.y, vector.z));
 	const b = vector.max(new THREE.Vector3()).length();
 	return a + b;
-};
-
-const distanceToWorld = point => Math.min(point.y, distanceToCube(point, cube));
+}));
 
 const EPSILON = 0.001;
 const normalToWorld = point => new THREE.Vector3(
