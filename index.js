@@ -106,6 +106,18 @@ const player = {
 };
 scene.add(player.model);
 
+
+const smoothMin = values => {
+	const K = 0.1;
+	const smoothMin = (a, b) => {
+		const h = Math.max(K - abs(a - b), 0) / K;
+		return Math.min(a, b) - h * h * K * 0.25;
+	};
+	let result = smoothMin(values[0], values[1]);
+	for (let i = 2; i < values.length; ++i) result = smoothMin(result, values[i]);
+	return result;
+};
+
 const distanceToWorld = point => Math.min(point.y, ...cubes.map(cube => {
 	const vector = point.clone().applyMatrix4(cube.matrix.clone().invert());
 	vector.fromArray(vector.toArray().map(Math.abs)).subScalar(1);
@@ -147,10 +159,7 @@ const update = dt => {
 	
 	player.position.add(player.velocity.clone().setLength(unobstructed));
 	
-	const normal = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]
-		.map(([x, y, z]) => new THREE.Vector3(x, y, z).multiplyScalar(EPSILON))
-		.map(p => normalToWorld(p.add(player.position)))
-		.reduce((a, b) => a.add(b)).multiplyScalar(1 / 6);
+	const normal = normalToWorld(player.position);
 	const direction = player.velocity.clone().setLength(obstructed);
 	const grounded = direction.dot(normal) < 0;
 	if (grounded) {
@@ -174,7 +183,7 @@ const update = dt => {
 
 	player.velocity.y = vy;
 
-	if (grounded && key(" ")) {
+	if (grounded && keyPressed(" ")) {
 		player.velocity.y = JUMP_AMOUNT_VERTICAL;
 		player.velocity.add(normal.setLength(JUMP_AMOUNT_NON_VERTICAL));
 	}
