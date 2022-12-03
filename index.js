@@ -1,7 +1,8 @@
 //	Buust: Shift
+//		Needs a slowdown at the end
+//		Needs a cooldown as well
 //		Changes attacks and blocks
-//		Initial moment based off of current momentum, then you get drifts
-//		Dive?
+//		Initial moment based off of current momentum, then you get drifts?
 //	Punch: LMB
 //		1-2-3 sequence if used repeatedly
 //		Heavy attack if buusting
@@ -34,10 +35,11 @@ const FLY_ACCEL_TIME = 1;
 const FLY_ACCEL = SPEED / FLY_ACCEL_TIME;
 const FLY_DRAG = 1 / FLY_ACCEL_TIME;
 
-const BUUST_SPEED = SPEED * 3;
+const BUUST_SPEED = SPEED * 5;
 const BUUST_ACCEL_TIME = WALK_ACCEL_TIME;
 const BUUST_ACCEL = BUUST_SPEED / BUUST_ACCEL_TIME;
 const BUUST_DRAG = 1 / BUUST_ACCEL_TIME;
+const BUUST_TIME = 0.1;
 
 const CAMERA_DIST = 2;
 const TICK_TIME = 1 / 200;
@@ -111,6 +113,7 @@ const player = {
 	),
 	jumped: false,
 	buust: new THREE.Vector3(),
+	buusting: 0,
 };
 scene.add(player.model);
 
@@ -197,10 +200,14 @@ const update = dt => {
 	
 	player.model.position.copy(player.position);
 
-	if (keyPressed("ShiftLeft")) camera.getWorldDirection(player.buust);
-	if (key("ShiftLeft")) {
+	if (keyPressed("ShiftLeft")) {
+		camera.getWorldDirection(player.buust);
+		player.buusting = BUUST_TIME;
+	}
+	if (player.buusting > 0) {
 		player.velocity.add(player.buust.setLength(BUUST_ACCEL * dt));
 		player.velocity.add(player.velocity.clone().multiplyScalar(-BUUST_DRAG * dt));
+		player.buusting -= dt;
 	}
 
 	{
