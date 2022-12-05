@@ -5,9 +5,9 @@
 //		Initial moment based off of current momentum, then you get drifts?
 //	Punch: LMB
 //		1-2-3 sequence if used repeatedly
-//		Heavy attack if buusting
-//		Slam attack if diving
-//		Context-sensitive execution?
+//		Ram attack if buusting along the ground
+//		Slam attack if have enough speed towards the ground
+//		Context-sensitive execution attack?
 //	Block: RMB
 //		Parry if release is timed correctly, stuns enemy
 //		Knockpack if ram while buusting
@@ -180,19 +180,17 @@ const update = dt => {
 	if (player.buusted && grounded) player.buusted = false;
 	if (keyPressed("ShiftLeft")) {
 		camera.getWorldDirection(player.buustDirection);
-		if (!grounded && !player.buusted) {
+		if (grounded) player.buustDirection.projectOnPlane(normal);
+		else if (!player.buusted) {
 			player.remainingBuustTime = BUUST_TIME;
 			player.buusted = true;
 		}
 	}
-	if (player.remainingBuustTime > 0) {
-		player.velocity.add(player.buustDirection.setLength(BUUST_ACCEL * dt));
+
+	if (player.remainingBuustTime > 0 || (grounded && key("ShiftLeft"))) {
+		player.velocity.add(player.buustDirection.clone().setLength(BUUST_ACCEL * dt));
 		player.velocity.add(player.velocity.clone().multiplyScalar(-BUUST_DRAG * dt));
 		player.remainingBuustTime -= dt;
-	} else if (key("ShiftLeft") && grounded) {
-		player.buustDirection.projectOnPlane(normal);
-		player.velocity.add(player.buustDirection.setLength(BUUST_ACCEL * dt));
-		player.velocity.add(player.velocity.clone().multiplyScalar(-BUUST_DRAG * dt));
 	} else {
 		const vy = player.velocity.y;
 		player.velocity.y = 0;
