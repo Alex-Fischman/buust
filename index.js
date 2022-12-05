@@ -1,7 +1,6 @@
 //	Buust: Shift
 //		Drifting
 //		Changes attacks and blocks
-//		Initial moment based off of current momentum, then you get drifts?
 //	Punch: LMB
 //		1-2-3 sequence if used repeatedly
 //		Ram attack if buusting along the ground
