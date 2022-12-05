@@ -1,6 +1,9 @@
 //	Buust: Shift
-//		Needs a slowdown at the end
-//		Needs a cooldown as well
+//		Boost of speed in the air
+//			Only available once per jump
+//			Indicate state visually
+//		Sprint on the ground
+//			Direction changes slowly
 //		Changes attacks and blocks
 //		Initial moment based off of current momentum, then you get drifts?
 //	Punch: LMB
