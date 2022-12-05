@@ -194,9 +194,8 @@ const update = dt => {
 		player.velocity.add(player.buustDirection.setLength(BUUST_ACCEL * dt));
 		player.velocity.add(player.velocity.clone().multiplyScalar(-BUUST_DRAG * dt));
 	} else {
-		const vy = player.velocity.y - GRAVITY * dt;
+		const vy = player.velocity.y;
 		player.velocity.y = 0;
-
 		const walk = new THREE.Vector3(key("KeyD") - key("KeyA"), 0, key("KeyS") - key("KeyW"));
 		const rotate = new THREE.Euler();
 		rotate.order = "YXZ";
@@ -206,10 +205,10 @@ const update = dt => {
 		const DRAG = grounded? WALK_DRAG: FLY_DRAG;
 		player.velocity.add(walk.setLength(ACCEL * dt));
 		player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
-
 		player.velocity.y = vy;
 	}
 
+	player.velocity.y -= GRAVITY * dt;
 	if (!player.jumped && key("Space") && grounded) {
 		player.velocity.y = JUMP_AMOUNT_VERTICAL;
 		player.velocity.add(normal.setLength(JUMP_AMOUNT_NON_VERTICAL));
