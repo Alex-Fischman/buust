@@ -1,6 +1,5 @@
 //	Buust: Shift
 //		Drifting
-//		Indicate air boost state visually
 //		Changes attacks and blocks
 //		Initial moment based off of current momentum, then you get drifts?
 //	Punch: LMB
@@ -180,15 +179,16 @@ const update = dt => {
 	if (player.buusted && grounded) player.buusted = false;
 	if (keyPressed("ShiftLeft")) {
 		camera.getWorldDirection(player.buustDirection);
-		if (grounded) player.buustDirection.projectOnPlane(normal);
-		else if (!player.buusted) {
+		if (!grounded && !player.buusted) {
 			player.remainingBuustTime = BUUST_TIME;
 			player.buusted = true;
 		}
 	}
 
 	if (player.remainingBuustTime > 0 || (grounded && key("ShiftLeft"))) {
-		player.velocity.add(player.buustDirection.clone().setLength(BUUST_ACCEL * dt));
+		const direction = player.buustDirection.clone();
+		if (grounded) direction.projectOnPlane(normal);
+		player.velocity.add(direction.setLength(BUUST_ACCEL * dt));
 		player.velocity.add(player.velocity.clone().multiplyScalar(-BUUST_DRAG * dt));
 		player.remainingBuustTime -= dt;
 	} else {
