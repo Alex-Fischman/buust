@@ -1,5 +1,3 @@
-//	Buust: Shift
-//		Changes attacks and blocks
 //	Punch: LMB
 //		1-2-3 sequence if used repeatedly
 //		Ram attack if buusting along the ground
@@ -93,8 +91,7 @@ const cubes = [[0, 1, -6], [0, 3, -7], [4, 1, -7], [4, 3, -7]].map(position => {
 
 document.addEventListener("mousemove", event => {
 	if (!document.pointerLockElement) return;
-	const euler = new THREE.Euler(0, 0, 0, "YXZ")
-		.setFromQuaternion(camera.quaternion);
+	const euler = new THREE.Euler(0, 0, 0, "YXZ").setFromQuaternion(camera.quaternion);
 	euler.y -= event.movementX * 0.002;
 	euler.x -= event.movementY * 0.002;
 	euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
@@ -104,13 +101,10 @@ document.addEventListener("mousemove", event => {
 const player = {
 	position: new THREE.Vector3(0, 1, 0),
 	velocity: new THREE.Vector3(0, 0, 0),
-	model: new THREE.Mesh(
-		new THREE.SphereGeometry(RADIUS),
-		new THREE.MeshBasicMaterial(),
-	),
+	model: new THREE.Mesh(new THREE.SphereGeometry(RADIUS), new THREE.MeshBasicMaterial()),
 	jumped: false,
-	remainingBuustTime: 0,
 	buusted: false,
+	remainingBuustTime: 0,
 };
 scene.add(player.model);
 
