@@ -116,16 +116,6 @@ const player = {
 };
 scene.add(player.model);
 
-const smoothMin = values => {
-	const smoothMin = (a, b) => {
-		const h = Math.max(EPSILON - abs(a - b), 0) / EPSILON;
-		return Math.min(a, b) - h * h * EPSILON * 0.25;
-	};
-	let result = smoothMin(values[0], values[1]);
-	for (let i = 2; i < values.length; ++i) result = smoothMin(result, values[i]);
-	return result;
-};
-
 const distanceToWorld = point => Math.min(point.y, ...cubes.map(cube => {
 	const vector = point.clone().applyMatrix4(cube.matrix.clone().invert());
 	vector.fromArray(vector.toArray().map(Math.abs)).subScalar(1);
