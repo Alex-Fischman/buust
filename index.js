@@ -103,8 +103,6 @@ const player = {
 	velocity: new THREE.Vector3(0, 0, 0),
 	model: new THREE.Mesh(new THREE.SphereGeometry(RADIUS), new THREE.MeshBasicMaterial()),
 	jumped: false,
-	buusted: false,
-	remainingBuustTime: 0,
 };
 scene.add(player.model);
 
@@ -157,17 +155,10 @@ const update = dt => {
 	}
 	player.position.add(direction);
 
-	if (player.buusted && grounded) player.buusted = false;
-	if (keyPressed("ShiftLeft") && !grounded && !player.buusted) {
-		player.remainingBuustTime = BUUST_TIME;
-		player.buusted = true;
-	}
-
-	if (player.remainingBuustTime > 0 || (grounded && key("ShiftLeft"))) {
+	if (grounded && key("ShiftLeft")) {
 		const direction = new THREE.Vector3();
 		camera.getWorldDirection(direction);
-		if (grounded) direction.projectOnPlane(normal);
-		player.velocity.add(direction.setLength(BUUST_ACCEL * dt));
+		player.velocity.add(direction.projectOnPlane(normal).setLength(BUUST_ACCEL * dt));
 		player.velocity.add(player.velocity.clone().multiplyScalar(-BUUST_DRAG * dt));
 		player.remainingBuustTime -= dt;
 	} else {
