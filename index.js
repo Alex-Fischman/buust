@@ -158,7 +158,11 @@ const update = dt => {
 	if (grounded && key("ShiftLeft")) {
 		const direction = new THREE.Vector3();
 		camera.getWorldDirection(direction);
-		player.velocity.add(direction.projectOnPlane(normal).setLength(BUUST_ACCEL * dt));
+		direction.projectOnPlane(normal);
+		const right = direction.clone().cross(normal);
+		direction.setLength(key("KeyW") - key("KeyS"));
+		right.setLength(key("KeyD") - key("KeyA"));
+		player.velocity.add(direction.add(right).setLength(BUUST_ACCEL * dt));
 		player.velocity.add(player.velocity.clone().multiplyScalar(-BUUST_DRAG * dt));
 		player.remainingBuustTime -= dt;
 	} else {
