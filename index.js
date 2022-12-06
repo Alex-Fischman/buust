@@ -1,4 +1,5 @@
-//	Buust: Space
+//	Buust: Shift
+//		Drifting
 //		Changes attacks and blocks
 //	Punch: LMB
 //		1-2-3 sequence if used repeatedly
@@ -13,16 +14,30 @@
 //		Shove: E and Q?
 
 const RADIUS = 0.25;
-const SPEED = 5;
-const GRAVITY = 10;
+const JUMP_HEIGHT = 2;
+const JUMP_TIME = 1;
+const JUMP_DIST = 4;
+const SPEED = JUMP_DIST / JUMP_TIME;
+const GRAVITY = 8 * JUMP_HEIGHT / JUMP_TIME / JUMP_TIME;
+const JUMP_IMPULSE = 4 * JUMP_HEIGHT / JUMP_TIME;
+
+const JUMP_PORTION_VERTICAL = 0.5; // for wall jumps
+const JUMP_AMOUNT_VERTICAL = JUMP_IMPULSE * JUMP_PORTION_VERTICAL;
+const JUMP_AMOUNT_NON_VERTICAL = JUMP_IMPULSE * (1 - JUMP_PORTION_VERTICAL);
 
 const WALK_ACCEL_TIME = 0.05;
 const WALK_ACCEL = SPEED / WALK_ACCEL_TIME;
 const WALK_DRAG = 1 / WALK_ACCEL_TIME;
 
-const FLY_ACCEL_TIME = 0.5;
+const FLY_ACCEL_TIME = 1;
 const FLY_ACCEL = SPEED / FLY_ACCEL_TIME;
 const FLY_DRAG = 1 / FLY_ACCEL_TIME;
+
+const BUUST_SPEED = SPEED * 3;
+const BUUST_ACCEL_TIME = WALK_ACCEL_TIME;
+const BUUST_ACCEL = BUUST_SPEED / BUUST_ACCEL_TIME;
+const BUUST_DRAG = 1 / BUUST_ACCEL_TIME;
+const BUUST_TIME = 0.1;
 
 const CAMERA_DIST = 1;
 const TICK_TIME = 1 / 200;
@@ -95,6 +110,9 @@ const player = {
 		new THREE.MeshBasicMaterial(),
 	),
 	jumped: false,
+	buustDirection: new THREE.Vector3(),
+	remainingBuustTime: 0,
+	buusted: false,
 };
 scene.add(player.model);
 
@@ -127,16 +145,12 @@ const raymarch = (position, direction, minDist, maxIter) => {
 	}
 };
 
-const normalHelper = new THREE.ArrowHelper(new THREE.Vector3(), player.position, 1, 0xFF0000);
-scene.add(normalHelper);
-
 const update = dt => {
 	floor.position.copy(player.position).floor();
 	floor.position.y = 0;
 
 	const distance = distanceToWorld(player.position) - RADIUS;
 	const normal = normalToWorld(player.position);
-	normalHelper.setDirection(normal);
 	const movement = player.velocity.length() * dt;
 	const unobstructed = Math.min(movement, distance);
 	const   obstructed = Math.max(movement - distance, 0);
@@ -144,26 +158,56 @@ const update = dt => {
 	player.position.add(player.velocity.clone().setLength(unobstructed));
 
 	const direction = player.velocity.clone().setLength(obstructed);
-	const grounded = obstructed > 0 && direction.dot(normal) <= 0;
+	const grounded = direction.dot(normal) <= 0 && direction.length() > 0;
 	if (grounded) {
 		direction.projectOnPlane(normal);
 		player.velocity.projectOnPlane(normal);
 	}
 	player.position.add(direction);
 
-	const facing = new THREE.Vector3();
-	camera.getWorldDirection(facing);
+	if (player.buusted && grounded) player.buusted = false;
+	if (keyPressed("ShiftLeft")) {
+		camera.getWorldDirection(player.buustDirection);
+		if (!grounded && !player.buusted) {
+			player.remainingBuustTime = BUUST_TIME;
+			player.buusted = true;
+		}
+	}
 
-	const forward = facing.clone().projectOnPlane(normal).normalize();
-	const right = forward.clone().cross(normal).normalize();
-	forward.setLength(key("KeyW") - key("KeyS"));
-	right.setLength(key("KeyD") - key("KeyA"));
-	player.velocity.add(forward.add(right).setLength(WALK_ACCEL * dt));
-	player.velocity.add(player.velocity.clone().multiplyScalar(-WALK_DRAG * dt));
-	player.velocity.sub(normal.clone().setLength(GRAVITY * dt));
+	if (player.remainingBuustTime > 0 || (grounded && key("ShiftLeft"))) {
+		const direction = player.buustDirection.clone();
+		if (grounded) direction.projectOnPlane(normal);
+		player.velocity.add(direction.setLength(BUUST_ACCEL * dt));
+		player.velocity.add(player.velocity.clone().multiplyScalar(-BUUST_DRAG * dt));
+		player.remainingBuustTime -= dt;
+	} else {
+		const vy = player.velocity.y;
+		player.velocity.y = 0;
+		const walk = new THREE.Vector3(key("KeyD") - key("KeyA"), 0, key("KeyS") - key("KeyW"));
+		const rotate = new THREE.Euler();
+		rotate.order = "YXZ";
+		rotate.setFromRotationMatrix(camera.matrix);
+		walk.applyEuler(rotate.set(0, rotate.y, 0));
+		const ACCEL = grounded? WALK_ACCEL: FLY_ACCEL;
+		const DRAG = grounded? WALK_DRAG: FLY_DRAG;
+		player.velocity.add(walk.setLength(ACCEL * dt));
+		player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
+		player.velocity.y = vy;
+	}
+
+	player.velocity.y -= GRAVITY * dt;
+	if (!player.jumped && key("Space") && grounded) {
+		player.velocity.y = JUMP_AMOUNT_VERTICAL;
+		player.velocity.add(normal.setLength(JUMP_AMOUNT_NON_VERTICAL));
+		player.jumped = true;
+	}
+	if (player.jumped && !key("Space")) player.jumped = false;
+	
+	player.model.position.copy(player.position);
 	
 	{
-		const direction = facing.clone();
+		const direction = new THREE.Vector3();
+		camera.getWorldDirection(direction);
 		direction.negate();
 		const d = raymarch(player.position, direction, EPSILON, 10);
 		const minimumDistance = RADIUS / Math.atan(camera.fov / 2 * Math.PI / 180);
@@ -171,8 +215,6 @@ const update = dt => {
 		camera.position.copy(player.position).add(direction.setLength(distance));
 	}
 
-	player.model.position.copy(player.position);
-	normalHelper.position.copy(player.position);
 	updateInput();
 };
 
