@@ -13,7 +13,7 @@
 const RADIUS = 0.25;
 const JUMP_HEIGHT = 2;
 const JUMP_TIME = 1;
-const JUMP_DIST = 4;
+const JUMP_DIST = 5;
 const SPEED = JUMP_DIST / JUMP_TIME;
 const GRAVITY = 8 * JUMP_HEIGHT / JUMP_TIME / JUMP_TIME;
 const JUMP_IMPULSE = 4 * JUMP_HEIGHT / JUMP_TIME;
@@ -29,10 +29,6 @@ const WALK_DRAG = 1 / WALK_ACCEL_TIME;
 const FLY_ACCEL_TIME = 1;
 const FLY_ACCEL = SPEED / FLY_ACCEL_TIME;
 const FLY_DRAG = 1 / FLY_ACCEL_TIME;
-
-const BUUST_SPEED = SPEED * 2;
-const BUUST_ACCEL = BUUST_SPEED / WALK_ACCEL_TIME;
-const BUUST_DRAG = 1 / WALK_ACCEL_TIME;
 
 const CAMERA_DIST = 1;
 const TICK_TIME = 1 / 200;
@@ -153,39 +149,20 @@ const update = dt => {
 	}
 	player.position.add(direction);
 
-	if (grounded && key("ShiftLeft")) {
+	if (grounded) {
 		const forward = new THREE.Vector3();
 		camera.getWorldDirection(forward);
-		const left = normal.clone().cross(forward);
-		const backward = forward.clone().negate();
-		const right = left.clone().negate();
-
-		if (forward.dot(normal) < 0) forward.projectOnPlane(normal);
-		forward.setLength(key("KeyW"));
-		if (left.dot(normal) < 0) left.projectOnPlane(normal);
-		left.setLength(key("KeyA"));
-		if (backward.dot(normal) < 0) backward.projectOnPlane(normal);
-		backward.setLength(key("KeyS"));
-		if (right.dot(normal) < 0) right.projectOnPlane(normal);
-		right.setLength(key("KeyD"));
-
-		const buust = new THREE.Vector3().add(forward).add(left).add(backward).add(right);
-		player.velocity.add(buust.setLength(BUUST_ACCEL * dt));
-		player.velocity.add(player.velocity.clone().multiplyScalar(-BUUST_DRAG * dt));
-		player.remainingBuustTime -= dt;
+		forward.projectOnPlane(normal);
+		const right = forward.clone().cross(normal);
+		forward.setLength(key("KeyW") - key("KeyS"));
+		right.setLength(key("KeyD") - key("KeyA"));
+		player.velocity.add(forward.add(right).setLength(WALK_ACCEL * dt));
+		player.velocity.add(player.velocity.clone().multiplyScalar(-WALK_DRAG * dt));
 	} else {
-		const vy = player.velocity.y;
-		player.velocity.y = 0;
 		const walk = new THREE.Vector3(key("KeyD") - key("KeyA"), 0, key("KeyS") - key("KeyW"));
-		const rotate = new THREE.Euler();
-		rotate.order = "YXZ";
-		rotate.setFromRotationMatrix(camera.matrix);
-		walk.applyEuler(rotate.set(0, rotate.y, 0));
-		const ACCEL = grounded? WALK_ACCEL: FLY_ACCEL;
-		const DRAG = grounded? WALK_DRAG: FLY_DRAG;
-		player.velocity.add(walk.setLength(ACCEL * dt));
-		player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
-		player.velocity.y = vy;
+		const rotate = new THREE.Euler("YXZ").setFromRotationMatrix(camera.matrix);
+		player.velocity.add(walk.applyEuler(rotate.set(0, rotate.y, 0)).setLength(FLY_ACCEL * dt));
+		player.velocity.add(player.velocity.clone().multiplyScalar(-FLY_DRAG * dt));
 	}
 
 	player.velocity.y -= GRAVITY * dt;
