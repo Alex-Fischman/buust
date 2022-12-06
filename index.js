@@ -31,10 +31,8 @@ const FLY_ACCEL = SPEED / FLY_ACCEL_TIME;
 const FLY_DRAG = 1 / FLY_ACCEL_TIME;
 
 const BUUST_SPEED = SPEED * 2;
-const BUUST_ACCEL_TIME = WALK_ACCEL_TIME;
-const BUUST_ACCEL = BUUST_SPEED / BUUST_ACCEL_TIME;
-const BUUST_DRAG = 1 / BUUST_ACCEL_TIME;
-const BUUST_TIME = 0.1;
+const BUUST_ACCEL = BUUST_SPEED / WALK_ACCEL_TIME;
+const BUUST_DRAG = 1 / WALK_ACCEL_TIME;
 
 const CAMERA_DIST = 1;
 const TICK_TIME = 1 / 200;
@@ -156,13 +154,23 @@ const update = dt => {
 	player.position.add(direction);
 
 	if (grounded && key("ShiftLeft")) {
-		const direction = new THREE.Vector3();
-		camera.getWorldDirection(direction);
-		direction.projectOnPlane(normal);
-		const right = direction.clone().cross(normal);
-		direction.setLength(key("KeyW") - key("KeyS"));
-		right.setLength(key("KeyD") - key("KeyA"));
-		player.velocity.add(direction.add(right).setLength(BUUST_ACCEL * dt));
+		const forward = new THREE.Vector3();
+		camera.getWorldDirection(forward);
+		const left = normal.clone().cross(forward);
+		const backward = forward.clone().negate();
+		const right = left.clone().negate();
+
+		if (forward.dot(normal) < 0) forward.projectOnPlane(normal);
+		forward.setLength(key("KeyW"));
+		if (left.dot(normal) < 0) left.projectOnPlane(normal);
+		left.setLength(key("KeyA"));
+		if (backward.dot(normal) < 0) backward.projectOnPlane(normal);
+		backward.setLength(key("KeyS"));
+		if (right.dot(normal) < 0) right.projectOnPlane(normal);
+		right.setLength(key("KeyD"));
+
+		const buust = new THREE.Vector3().add(forward).add(left).add(backward).add(right);
+		player.velocity.add(buust.setLength(BUUST_ACCEL * dt));
 		player.velocity.add(player.velocity.clone().multiplyScalar(-BUUST_DRAG * dt));
 		player.remainingBuustTime -= dt;
 	} else {
