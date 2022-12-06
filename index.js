@@ -1,5 +1,4 @@
 //	Buust: Shift
-//		Drifting
 //		Changes attacks and blocks
 //	Punch: LMB
 //		1-2-3 sequence if used repeatedly
@@ -33,7 +32,7 @@ const FLY_ACCEL_TIME = 1;
 const FLY_ACCEL = SPEED / FLY_ACCEL_TIME;
 const FLY_DRAG = 1 / FLY_ACCEL_TIME;
 
-const BUUST_SPEED = SPEED * 3;
+const BUUST_SPEED = SPEED * 2;
 const BUUST_ACCEL_TIME = WALK_ACCEL_TIME;
 const BUUST_ACCEL = BUUST_SPEED / BUUST_ACCEL_TIME;
 const BUUST_DRAG = 1 / BUUST_ACCEL_TIME;
@@ -110,7 +109,6 @@ const player = {
 		new THREE.MeshBasicMaterial(),
 	),
 	jumped: false,
-	buustDirection: new THREE.Vector3(),
 	remainingBuustTime: 0,
 	buusted: false,
 };
@@ -166,16 +164,14 @@ const update = dt => {
 	player.position.add(direction);
 
 	if (player.buusted && grounded) player.buusted = false;
-	if (keyPressed("ShiftLeft")) {
-		camera.getWorldDirection(player.buustDirection);
-		if (!grounded && !player.buusted) {
-			player.remainingBuustTime = BUUST_TIME;
-			player.buusted = true;
-		}
+	if (keyPressed("ShiftLeft") && !grounded && !player.buusted) {
+		player.remainingBuustTime = BUUST_TIME;
+		player.buusted = true;
 	}
 
 	if (player.remainingBuustTime > 0 || (grounded && key("ShiftLeft"))) {
-		const direction = player.buustDirection.clone();
+		const direction = new THREE.Vector3();
+		camera.getWorldDirection(direction);
 		if (grounded) direction.projectOnPlane(normal);
 		player.velocity.add(direction.setLength(BUUST_ACCEL * dt));
 		player.velocity.add(player.velocity.clone().multiplyScalar(-BUUST_DRAG * dt));
