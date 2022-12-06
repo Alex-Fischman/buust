@@ -1,6 +1,9 @@
+//	Buust: Shift
+//		Dash
+//		Cooldown that only recharges if grounded
 //	Punch: LMB
 //		1-2-3 sequence if used repeatedly
-//		Ram attack if buusting along the ground
+//		Ram attack if buusting
 //		Slam attack if have enough speed towards the ground
 //		Context-sensitive execution attack?
 //	Block: RMB
@@ -149,21 +152,14 @@ const update = dt => {
 	}
 	player.position.add(direction);
 
-	if (grounded) {
-		const forward = new THREE.Vector3();
-		camera.getWorldDirection(forward);
-		forward.projectOnPlane(normal);
-		const right = forward.clone().cross(normal);
-		forward.setLength(key("KeyW") - key("KeyS"));
-		right.setLength(key("KeyD") - key("KeyA"));
-		player.velocity.add(forward.add(right).setLength(WALK_ACCEL * dt));
-		player.velocity.add(player.velocity.clone().multiplyScalar(-WALK_DRAG * dt));
-	} else {
-		const walk = new THREE.Vector3(key("KeyD") - key("KeyA"), 0, key("KeyS") - key("KeyW"));
-		const rotate = new THREE.Euler("YXZ").setFromRotationMatrix(camera.matrix);
-		player.velocity.add(walk.applyEuler(rotate.set(0, rotate.y, 0)).setLength(FLY_ACCEL * dt));
-		player.velocity.add(player.velocity.clone().multiplyScalar(-FLY_DRAG * dt));
-	}
+	const vy = player.velocity.y;
+	const ACCEL = grounded? WALK_ACCEL: FLY_ACCEL;
+	const DRAG = grounded? WALK_DRAG: FLY_DRAG;
+	const walk = new THREE.Vector3(key("KeyD") - key("KeyA"), 0, key("KeyS") - key("KeyW"));
+	const rotate = new THREE.Euler(0, 0, 0, "YXZ").setFromRotationMatrix(camera.matrix);
+	player.velocity.add(walk.applyEuler(rotate.set(0, rotate.y, 0)).setLength(ACCEL * dt));
+	player.velocity.add(player.velocity.clone().multiplyScalar(-DRAG * dt));
+	player.velocity.y = vy;
 
 	player.velocity.y -= GRAVITY * dt;
 	if (!player.jumped && key("Space") && grounded) {
