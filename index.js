@@ -150,15 +150,15 @@ const update = dt => {
 	floor.position.y = 0;
 
 	const distance = distanceToWorld(player.position) - RADIUS;
+	const normal = normalToWorld(player.position);
 	const movement = player.velocity.length() * dt;
 	const unobstructed = Math.min(movement, distance);
 	const   obstructed = Math.max(movement - distance, 0);
-	
+
 	player.position.add(player.velocity.clone().setLength(unobstructed));
-	
-	const normal = normalToWorld(player.position);
+
 	const direction = player.velocity.clone().setLength(obstructed);
-	const grounded = direction.dot(normal) < 0;
+	const grounded = direction.dot(normal) <= 0 && direction.length() > 0;
 	if (grounded) {
 		direction.projectOnPlane(normal);
 		player.velocity.projectOnPlane(normal);
