@@ -1,3 +1,4 @@
+//	Wallrun?
 //	Buust: Shift
 //		Dash
 //		Cooldown that only recharges if grounded
@@ -33,12 +34,14 @@ const FLY_ACCEL_TIME = 1;
 const FLY_ACCEL = SPEED / FLY_ACCEL_TIME;
 const FLY_DRAG = 1 / FLY_ACCEL_TIME;
 
-const CAMERA_DIST = 1;
+const CAMERA_FOV = 90;
+const CAMERA_MAX_DIST = 1;
+const CAMERA_MIN_DIST = RADIUS / Math.atan(CAMERA_FOV / 2 * Math.PI / 180);
 const TICK_TIME = 1 / 200;
 const EPSILON = 0.001;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(90, 1, 1e-5, 1e5);
+const camera = new THREE.PerspectiveCamera(CAMERA_FOV, 1, 1e-5, 1e5);
 const renderer = new THREE.WebGLRenderer();
 document.body.appendChild(renderer.domElement);
 
@@ -176,8 +179,7 @@ const update = dt => {
 		camera.getWorldDirection(direction);
 		direction.negate();
 		const d = raymarch(player.position, direction, EPSILON, 10);
-		const minimumDistance = RADIUS / Math.atan(camera.fov / 2 * Math.PI / 180);
-		const distance = Math.max(Math.min(CAMERA_DIST, d - camera.near), minimumDistance);
+		const distance = Math.max(Math.min(CAMERA_MAX_DIST, d - camera.near), CAMERA_MIN_DIST);
 		camera.position.copy(player.position).add(direction.setLength(distance));
 	}
 
