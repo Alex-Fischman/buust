@@ -13,7 +13,7 @@
 //	Interact: E or Q
 //		Shove: E and Q?
 
-const RADIUS = 0.5;
+const RADIUS = 0.25;
 const JUMP_HEIGHT = 2;
 const JUMP_TIME = 1;
 const JUMP_DIST = 4;
@@ -39,7 +39,7 @@ const BUUST_ACCEL = BUUST_SPEED / BUUST_ACCEL_TIME;
 const BUUST_DRAG = 1 / BUUST_ACCEL_TIME;
 const BUUST_TIME = 0.1;
 
-const CAMERA_DIST = 2;
+const CAMERA_DIST = 1;
 const TICK_TIME = 1 / 200;
 const EPSILON = 0.001;
 
