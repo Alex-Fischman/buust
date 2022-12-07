@@ -1,6 +1,3 @@
-//	Buust: Shift
-//		Dash
-//		Cooldown that only recharges if grounded
 //	Punch: LMB
 //		1-2-3 sequence if used repeatedly
 //		Ram attack if buusting
@@ -106,7 +103,7 @@ const player = {
 	model: new THREE.Mesh(new THREE.SphereGeometry(RADIUS), new THREE.MeshBasicMaterial()),
 	jumped: false,
 	buusted: false,
-	buustRecharged: true,
+	recharged: true,
 };
 scene.add(player.model);
 
@@ -176,7 +173,7 @@ const update = dt => {
 	}
 	if (player.jumped && !key("Space")) player.jumped = false;
 
-	if (!player.buusted && player.buustRecharged && key("ShiftLeft") && !grounded) {
+	if (!player.buusted && player.recharged && key("ShiftLeft") && !grounded) {
 		player.buusted = true;
 		const direction = new THREE.Vector3();
 		camera.getWorldDirection(direction);
@@ -185,9 +182,9 @@ const update = dt => {
 	}
 	if (player.buusted && !key("ShiftLeft")) {
 		player.buusted = false;
-		player.buustRecharged = false;
+		player.recharged = false;
 	}
-	if (!player.buustRecharged && grounded) player.buustRecharged = true;
+	if (!player.recharged && grounded) player.recharged = true;
 
 	player.model.position.copy(player.position);
 	
@@ -203,7 +200,7 @@ const update = dt => {
 	updateInput();
 };
 
-let then = undefined;
+let then;
 const frame = now => {
 	let extra = (now - then) / 1000 || 1/60;
 	while (extra >= TICK_TIME) {
