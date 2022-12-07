@@ -175,9 +175,8 @@ const update = dt => {
 
 	if (!player.buusted && player.recharged && key("ShiftLeft") && !grounded) {
 		player.buusted = true;
-		const direction = new THREE.Vector3();
-		camera.getWorldDirection(direction);
-		direction.y = 0;
+		const direction = walk.clone();
+		if (!direction.length()) camera.getWorldDirection(direction);
 		player.velocity.add(direction.setLength(BUUST_IMPULSE));
 	}
 	if (player.buusted && !key("ShiftLeft")) {
