@@ -33,6 +33,8 @@ const FLY_ACCEL_TIME = 1;
 const FLY_ACCEL = SPEED / FLY_ACCEL_TIME;
 const FLY_DRAG = 1 / FLY_ACCEL_TIME;
 
+const BUUST_IMPULSE = 10;
+
 const CAMERA_FOV = 90;
 const CAMERA_MAX_DIST = 1;
 const CAMERA_MIN_DIST = RADIUS / Math.atan(CAMERA_FOV / 2 * Math.PI / 180);
@@ -102,6 +104,7 @@ const player = {
 	velocity: new THREE.Vector3(0, 0, 0),
 	model: new THREE.Mesh(new THREE.SphereGeometry(RADIUS), new THREE.MeshBasicMaterial()),
 	jumped: false,
+	buusted: false,
 };
 scene.add(player.model);
 
@@ -170,7 +173,15 @@ const update = dt => {
 		player.jumped = true;
 	}
 	if (player.jumped && !key("Space")) player.jumped = false;
-	
+
+	if (!player.buusted && key("ShiftLeft") && !grounded) {
+		player.buusted = true;
+		const direction = new THREE.Vector3();
+		camera.getWorldDirection(direction);
+		player.velocity.add(direction.setLength(BUUST_IMPULSE));
+	}
+	if (player.buusted && grounded) player.buusted = false;
+
 	player.model.position.copy(player.position);
 	
 	{
