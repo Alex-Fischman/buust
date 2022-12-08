@@ -77,7 +77,11 @@ const floor = (() => {
 	return floor;
 })();
 
-const cubes = [[0, 1, -6], [0, 3, -7], [4, 1, -7], [4, 3, -7]].map(position => {
+const cubes = [
+	[0, 1, -5], [0, 3, -6],
+	[3, 1, -6], [3, 3, -6], [5, 1, -5], [5, 5, -5],
+	[7, 1, -6], [7, 3, -6], [7, 5, -6],
+].map(position => {
 	const cube = new THREE.Mesh(
 		new THREE.BoxGeometry(2, 2, 2),
 		loadPrototypeMaterial(2, 2, "green")
