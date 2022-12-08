@@ -93,7 +93,7 @@ document.addEventListener("mousemove", event => {
 	const euler = new THREE.Euler(0, 0, 0, "YXZ").setFromQuaternion(camera.quaternion);
 	euler.y -= event.movementX * 0.002;
 	euler.x -= event.movementY * 0.002;
-	euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
+	euler.x = Math.max(-Math.PI / 2, Math.min(0, euler.x));
 	camera.quaternion.setFromEuler(euler);
 });
 
