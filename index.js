@@ -168,7 +168,7 @@ const update = dt => {
 	player.velocity.y -= GRAVITY * dt;
 	if (!player.jumped && key("Space") && grounded) {
 		player.velocity.add(new THREE.Vector3(0, JUMP_AMOUNT_VERTICAL, 0));
-		player.velocity.add(normal.setLength(JUMP_AMOUNT_NON_VERTICAL));
+		player.velocity.add(normal.clone().setLength(JUMP_AMOUNT_NON_VERTICAL));
 		player.jumped = true;
 	}
 	if (player.jumped && !key("Space")) player.jumped = false;
