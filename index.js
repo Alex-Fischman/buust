@@ -54,9 +54,9 @@ window.dispatchEvent(new Event("resize"));
 
 scene.fog = new THREE.Fog(0x000000, 1, 50);
 
-const loadPrototypeMaterial = (width, height, color = "blue", index = 1) => {
+const loadPrototypeMaterial = (width, height, id) => {
 	const URL_1 = "https://raw.githubusercontent.com/gsimone/gridbox-";
-	const URL_2 = `prototype-materials/main/prototype_512x512_${color}${index}.png`;
+	const URL_2 = `prototype-materials/main/prototype_512x512_${id}.png`;
 	const texture = new THREE.TextureLoader().load(
 		URL_1 + URL_2,
 		() => renderer.render(scene, camera),
@@ -71,20 +71,35 @@ const floor = (() => {
 	const FLOOR_SIZE = 100;
 	const floor = new THREE.Mesh(
 		new THREE.PlaneGeometry(FLOOR_SIZE, FLOOR_SIZE).rotateX(-Math.PI / 2),
-		loadPrototypeMaterial(FLOOR_SIZE, FLOOR_SIZE),
+		loadPrototypeMaterial(FLOOR_SIZE, FLOOR_SIZE, "blue1"),
 	);
 	scene.add(floor);
 	return floor;
 })();
 
 const cubes = [
-	[0, 1, -5], [0, 3, -6], [-1, 5, -6], [-1, 7, -5],
-	[3, 1, -6], [3, 3, -6], [5, 1, -5], [5, 5, -5],
-	[7, 1, -6], [7, 3, -6], [7, 5, -6],
+	[0, 1, -6], [0, 3, -8], // jump
+	[0, 3, -12], // jump over
+	[0, 3, -20], // jump and dash
+	[0, 5, -22], [2, 5, -22], // turn
+	[4, 7, -23.5], [4, 7, -20.5], // wall jump
+	[4, 9, -23.5], [4, 9, -20.5],
+	[4, 11, -23.5], [4, 11, -20.5],
+	[6, 11, -22], [8, 11, -22], [8, 11, -20], // turn
+	[8, 12, -12], // long jump
+	[8, 14, -10], [6, 14, -10], // turn
+	[4, 16, -10], [4, 18, -10], [4, 20, -10], // wall climb
+	[4, 14, -10], [4, 12, -10], [4, 10, -10], [4, 8, -10], // checkpoint
+	[4, 6, -10], [4, 4, -10], [4, 2, -10], [4, 0, -10], 
+	[2, 20, -10], [0, 20, -10], [-2, 20, -10], // walk
+	[-4, 22, -10], [-4, 26, -10], // wall boost
+	[-6, 26, -10], [-6, 26, -12], // turn
+	[-8, 30, -16], [-5, 26, -25], // long wall jump
+	// corner boost?
 ].map(position => {
 	const cube = new THREE.Mesh(
 		new THREE.BoxGeometry(2, 2, 2),
-		loadPrototypeMaterial(2, 2, "green")
+		loadPrototypeMaterial(2, 2, "green1")
 	);
 	cube.position.fromArray(position);
 	cube.updateMatrixWorld();
@@ -102,7 +117,7 @@ document.addEventListener("mousemove", event => {
 });
 
 const player = {
-	position: new THREE.Vector3(0, 1, 0),
+	position: new THREE.Vector3(0, 0, 0),
 	velocity: new THREE.Vector3(0, 0, 0),
 	model: new THREE.Mesh(new THREE.SphereGeometry(RADIUS), new THREE.MeshBasicMaterial()),
 	jumped: false,
