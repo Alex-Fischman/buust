@@ -155,10 +155,9 @@ const raymarch = (position, direction, minDist, maxIter) => {
 	}
 };
 
-const update = dt => {
-	floor.position.copy(player.position).floor();
-	floor.position.y = 0;
+const header = document.getElementById("header").children[0];
 
+const update = dt => {
 	const distance = distanceToWorld(player.position) - RADIUS;
 	const normal = normalToWorld(player.position);
 	const movement = player.velocity.length() * dt;
@@ -203,8 +202,6 @@ const update = dt => {
 		player.recharged = false;
 	}
 	if (!player.recharged && grounded) player.recharged = true;
-
-	player.model.position.copy(player.position);
 	
 	{
 		const direction = new THREE.Vector3();
@@ -214,8 +211,23 @@ const update = dt => {
 		const distance = Math.max(Math.min(CAMERA_MAX_DIST, d - camera.near), CAMERA_MIN_DIST);
 		camera.position.copy(player.position).add(direction.setLength(distance));
 	}
+};
 
-	updateInput();
+const render = () => {
+	floor.position.copy(player.position).floor();
+	floor.position.y = 0;
+
+	player.model.position.copy(player.position);
+	
+	header.innerText = player.position.y < 6.25? "Basic Movement":
+		player.position.y < 12.25? "Wall Jump":
+		player.position.y < 15.25? "Long Jump":
+		player.position.y < 21.25? "Wall Climb":
+		player.position.y < 27.25? "Wall Boost":
+		player.position.z > -24? "Long Wall Jump":
+		"Fin";
+	
+	renderer.render(scene, camera);
 };
 
 let then;
@@ -223,11 +235,11 @@ const frame = now => {
 	let extra = (now - then) / 1000 || 1/60;
 	while (extra >= TICK_TIME) {
 		update(TICK_TIME);
+		updateInput();
 		extra -= TICK_TIME;
 	}
 	then = now - extra;
-
-	renderer.render(scene, camera);
+	render();
 	if (document.pointerLockElement) requestAnimationFrame(frame);
 };
 requestAnimationFrame(frame);

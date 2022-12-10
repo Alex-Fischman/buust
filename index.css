@@ -1,4 +1,4 @@
-html, body, p {
+html, body, p, h1 {
 	width: 100%;
 	height: 100%;
 	margin: 0;
@@ -11,14 +11,31 @@ html, body, p {
 #blocker {
 	position: absolute;
 	font-size: 36px;
-	left: calc(50% - 24px * 13 / 2);
-	width: calc(24px * 13);
-	top: calc(50% - 48px * 3.5 / 2);
-	height: calc(48px * 3.5);
+	left: calc(50% - 24px * 18 / 2);
+	width: calc(24px * 18);
+	top: calc(50% - 48px * 4.5 / 2);
+	height: calc(48px * 4.5);
 	font-family: monospace;
 	background-color: #000000CC;
 	color: white;
 	text-align: center;
 	border-radius: 10px;
 	cursor: pointer;
+}
+
+#header {
+	position: absolute;
+	left: calc(50% - 90% / 2);
+	width: calc(90%);
+	top: calc(5% - 48px / 2);
+	height: calc(48px);
+	font-family: monospace;
+	background-color: #000000CC;
+	color: white;
+	text-align: center;
+	border-radius: 10px;
+}
+
+#header h1 {
+	font-size: 36px;
 }
