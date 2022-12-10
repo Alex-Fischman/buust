@@ -13,8 +13,8 @@ html, body, p {
 	font-size: 36px;
 	left: calc(50% - 24px * 13 / 2);
 	width: calc(24px * 13);
-	top: calc(50% - 48px / 2);
-	height: calc(48px);
+	top: calc(50% - 48px * 3.5 / 2);
+	height: calc(48px * 3.5);
 	font-family: monospace;
 	background-color: #000000CC;
 	color: white;
