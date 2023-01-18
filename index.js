@@ -1,15 +1,3 @@
-//	Punch: LMB
-//		1-2-3 sequence if used repeatedly
-//		Ram attack if buusting
-//		Slam attack if have enough speed towards the ground
-//		Context-sensitive execution attack?
-//	Block: RMB
-//		Parry if release is timed correctly, stuns enemy
-//		Knockpack if ram while buusting
-//		Pogo if diving?
-//	Interact: E or Q
-//		Shove: E and Q?
-
 const RADIUS = 0.25;
 const JUMP_HEIGHT = 2;
 const JUMP_TIME = 1;
@@ -33,8 +21,9 @@ const FLY_DRAG = 1 / FLY_ACCEL_TIME;
 const BUUST_IMPULSE = SPEED;
 
 const CAMERA_FOV = 90;
-const CAMERA_MAX_DIST = 1;
+const CAMERA_MAX_DIST = 0.5;
 const CAMERA_MIN_DIST = RADIUS / Math.atan(CAMERA_FOV / 2 * Math.PI / 180);
+const CAMERA_LERP = 0.2;
 
 const TICK_TIME = 1 / 200;
 const EPSILON = 0.001;
@@ -118,14 +107,14 @@ document.addEventListener("mousemove", event => {
 const player = {
 	position: new THREE.Vector3(0, 0, 0),
 	velocity: new THREE.Vector3(0, 0, 0),
-	model: new THREE.Mesh(new THREE.SphereGeometry(RADIUS)),
+	model: new THREE.Mesh(new THREE.CapsuleGeometry(RADIUS / 2, RADIUS, 3, 16)),
 	jumped: false,
 	buusted: false,
 	recharged: true,
 };
+
+player.model.geometry.rotateX(Math.PI / 2);
 scene.add(player.model);
-player.model.add(camera);
-camera.position.set(0, RADIUS * 0.75, 0);
 
 const distanceToWorld = point => Math.min(point.y, ...cubes.map(cube => {
 	const vector = point.clone().applyMatrix4(cube.matrix.clone().invert());
@@ -202,25 +191,26 @@ const update = dt => {
 	}
 	if (!player.recharged && grounded) player.recharged = true;
 	
-	// {
-	// 	const direction = new THREE.Vector3();
-	// 	camera.getWorldDirection(direction);
-	// 	direction.negate();
-	// 	const d = raymarch(player.position, direction, EPSILON, 10);
-	// 	const distance = Math.max(Math.min(CAMERA_MAX_DIST, d - camera.near), CAMERA_MIN_DIST);
-	// 	const cameraTarget = player.position.clone().add(direction.setLength(distance));
+	{
+		const direction = new THREE.Vector3();
+		camera.getWorldDirection(direction);
+		direction.negate();
+		const d = raymarch(player.position, direction, EPSILON, 10);
+		const distance = Math.max(Math.min(CAMERA_MAX_DIST, d - camera.near), CAMERA_MIN_DIST);
+		const cameraTarget = player.position.clone().add(direction.setLength(distance));
+		camera.position.lerp(cameraTarget, CAMERA_LERP);
+	}
 
-	// 	const CAMERA_LERP = 0.2;
-	// 	camera.position.lerp(cameraTarget, CAMERA_LERP);
-	// }
+	{
+		player.model.position.copy(player.position);
+		player.model.lookAt(normal.clone().add(player.position));
+	}
 };
 
 const render = () => {
 	floor.position.copy(player.position).floor();
 	floor.position.y = 0;
 
-	player.model.position.copy(player.position);
-	
 	document.getElementById("header").children[0].innerText = 
 		player.position.y < 6.25? "Basic Movement":
 		player.position.y < 12.25? "Wall Jump":
