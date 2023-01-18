@@ -59,7 +59,7 @@ const loadPrototypeMaterial = (width, height, id) => {
 	const URL_2 = `prototype-materials/main/prototype_512x512_${id}.png`;
 	const texture = new THREE.TextureLoader().load(
 		URL_1 + URL_2,
-		() => renderer.render(scene, camera),
+		() => render(),
 	);
 	texture.wrapS = THREE.RepeatWrapping;
 	texture.wrapT = THREE.RepeatWrapping;
@@ -119,7 +119,7 @@ document.addEventListener("mousemove", event => {
 const player = {
 	position: new THREE.Vector3(0, 0, 0),
 	velocity: new THREE.Vector3(0, 0, 0),
-	model: new THREE.Mesh(new THREE.SphereGeometry(RADIUS), new THREE.MeshBasicMaterial()),
+	model: new THREE.Mesh(new THREE.SphereGeometry(RADIUS)),
 	jumped: false,
 	buusted: false,
 	recharged: true,
@@ -154,8 +154,6 @@ const raymarch = (position, direction, minDist, maxIter) => {
 		iterations++;
 	}
 };
-
-const header = document.getElementById("header").children[0];
 
 const update = dt => {
 	const distance = distanceToWorld(player.position) - RADIUS;
@@ -219,7 +217,8 @@ const render = () => {
 
 	player.model.position.copy(player.position);
 	
-	header.innerText = player.position.y < 6.25? "Basic Movement":
+	document.getElementById("header").children[0].innerText = 
+		player.position.y < 6.25? "Basic Movement":
 		player.position.y < 12.25? "Wall Jump":
 		player.position.y < 15.25? "Long Jump":
 		player.position.y < 21.25? "Wall Climb":
