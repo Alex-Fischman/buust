@@ -95,7 +95,6 @@ const cubes = [
 	[-4, 22, -10], [-4, 26, -10], // wall boost
 	[-6, 26, -10], [-6, 26, -12], // turn
 	[-8, 30, -16], [-5, 26, -25], // long wall jump
-	// corner boost?
 ].map(position => {
 	const cube = new THREE.Mesh(
 		new THREE.BoxGeometry(2, 2, 2),
@@ -112,7 +111,7 @@ document.addEventListener("mousemove", event => {
 	const euler = new THREE.Euler(0, 0, 0, "YXZ").setFromQuaternion(camera.quaternion);
 	euler.y -= event.movementX * 0.002;
 	euler.x -= event.movementY * 0.002;
-	euler.x = Math.max(-Math.PI / 2, Math.min(0, euler.x));
+	euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.x));
 	camera.quaternion.setFromEuler(euler);
 });
 
@@ -125,6 +124,8 @@ const player = {
 	recharged: true,
 };
 scene.add(player.model);
+player.model.add(camera);
+camera.position.set(0, RADIUS * 0.75, 0);
 
 const distanceToWorld = point => Math.min(point.y, ...cubes.map(cube => {
 	const vector = point.clone().applyMatrix4(cube.matrix.clone().invert());
@@ -201,14 +202,17 @@ const update = dt => {
 	}
 	if (!player.recharged && grounded) player.recharged = true;
 	
-	{
-		const direction = new THREE.Vector3();
-		camera.getWorldDirection(direction);
-		direction.negate();
-		const d = raymarch(player.position, direction, EPSILON, 10);
-		const distance = Math.max(Math.min(CAMERA_MAX_DIST, d - camera.near), CAMERA_MIN_DIST);
-		camera.position.copy(player.position).add(direction.setLength(distance));
-	}
+	// {
+	// 	const direction = new THREE.Vector3();
+	// 	camera.getWorldDirection(direction);
+	// 	direction.negate();
+	// 	const d = raymarch(player.position, direction, EPSILON, 10);
+	// 	const distance = Math.max(Math.min(CAMERA_MAX_DIST, d - camera.near), CAMERA_MIN_DIST);
+	// 	const cameraTarget = player.position.clone().add(direction.setLength(distance));
+
+	// 	const CAMERA_LERP = 0.2;
+	// 	camera.position.lerp(cameraTarget, CAMERA_LERP);
+	// }
 };
 
 const render = () => {
