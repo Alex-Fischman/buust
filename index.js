@@ -113,7 +113,6 @@ const player = {
 	recharged: true,
 };
 
-player.model.geometry.rotateX(Math.PI / 2);
 scene.add(player.model);
 
 const distanceToWorld = point => Math.min(point.y, ...cubes.map(cube => {
@@ -133,7 +132,7 @@ const normalToWorld = point => new THREE.Vector3(
 	distanceToWorld(new THREE.Vector3(0, 0, -EPSILON).add(point)),
 ).normalize();
 
-const raymarch = (position, direction, minDist, maxIter) => {
+const raymarch = (position, direction, minDist = EPSILON, maxIter = 10) => {
 	let distance = 0;
 	let iterations = 0;
 	while (true) {
@@ -195,7 +194,7 @@ const update = dt => {
 		const direction = new THREE.Vector3();
 		camera.getWorldDirection(direction);
 		direction.negate();
-		const d = raymarch(player.position, direction, EPSILON, 10);
+		const d = raymarch(player.position, direction);
 		const distance = Math.max(Math.min(CAMERA_MAX_DIST, d - camera.near), CAMERA_MIN_DIST);
 		const cameraTarget = player.position.clone().add(direction.setLength(distance));
 		camera.position.lerp(cameraTarget, CAMERA_LERP);
@@ -203,7 +202,10 @@ const update = dt => {
 
 	{
 		player.model.position.copy(player.position);
-		player.model.lookAt(normal.clone().add(player.position));
+		
+		const up = player.model.up;
+		const target = up.clone().add(normal).normalize();
+		player.model.quaternion.slerp(new THREE.Quaternion().setFromUnitVectors(up, target), 0.05);
 	}
 };
 
