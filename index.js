@@ -1,33 +1,3 @@
-const RADIUS = 0.25;
-const JUMP_HEIGHT = 2;
-const JUMP_TIME = 1;
-const JUMP_DIST = 5;
-const SPEED = JUMP_DIST / JUMP_TIME;
-const GRAVITY = 8 * JUMP_HEIGHT / JUMP_TIME / JUMP_TIME;
-const JUMP_IMPULSE = 4 * JUMP_HEIGHT / JUMP_TIME;
-
-const JUMP_PORTION_VERTICAL = 0.5; // for wall jumps
-const JUMP_AMOUNT_VERTICAL = JUMP_IMPULSE * JUMP_PORTION_VERTICAL;
-const JUMP_AMOUNT_NON_VERTICAL = JUMP_IMPULSE * (1 - JUMP_PORTION_VERTICAL);
-
-const WALK_ACCEL_TIME = 0.05;
-const WALK_ACCEL = SPEED / WALK_ACCEL_TIME;
-const WALK_DRAG = 1 / WALK_ACCEL_TIME;
-
-const FLY_ACCEL_TIME = 1;
-const FLY_ACCEL = SPEED / FLY_ACCEL_TIME;
-const FLY_DRAG = 1 / FLY_ACCEL_TIME;
-
-const BUUST_IMPULSE = SPEED;
-
-const CAMERA_FOV = 90;
-const CAMERA_MAX_DIST = 0.5;
-const CAMERA_MIN_DIST = RADIUS / Math.atan(CAMERA_FOV / 2 * Math.PI / 180);
-const CAMERA_LERP = 0.2;
-
-const TICK_TIME = 1 / 200;
-const EPSILON = 0.001;
-
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(CAMERA_FOV, 1, 1e-5, 1e5);
 const renderer = new THREE.WebGLRenderer();
@@ -107,7 +77,7 @@ document.addEventListener("mousemove", event => {
 const player = {
 	position: new THREE.Vector3(0, 0, 0),
 	velocity: new THREE.Vector3(0, 0, 0),
-	model: new THREE.Mesh(new THREE.CapsuleGeometry(RADIUS / 2, RADIUS, 3, 16)),
+	model: new THREE.Mesh(new THREE.SphereGeometry(RADIUS)),
 	jumped: false,
 	buusted: false,
 	recharged: true,
@@ -200,13 +170,7 @@ const update = dt => {
 		camera.position.lerp(cameraTarget, CAMERA_LERP);
 	}
 
-	{
-		player.model.position.copy(player.position);
-		
-		const up = player.model.up;
-		const target = up.clone().add(normal).normalize();
-		player.model.quaternion.slerp(new THREE.Quaternion().setFromUnitVectors(up, target), 0.05);
-	}
+	player.model.position.copy(player.position);
 };
 
 const render = () => {
