@@ -14,7 +14,7 @@ html, body, p, h1 {
 	left: calc(50% - 24px * 18 / 2);
 	width: calc(24px * 18);
 	top: calc(50% - 48px * 4.5 / 2);
-	height: calc(48px * 4.5);
+	height: calc(48px * 5.5);
 	font-family: monospace;
 	background-color: #000000CC;
 	color: white;
